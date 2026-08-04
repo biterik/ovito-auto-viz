@@ -17,6 +17,11 @@ authors:
       Max-Planck-Institut for Sustainable Materials, Düsseldorf, Germany;
       Institute of Materials Simulation (WW8), Friedrich-Alexander-Universität
       Erlangen-Nürnberg (FAU), Fürth, Germany
+doi: 10.5281/zenodo.21796154
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.21796154
+    description: Concept DOI, resolves to the latest version
 repository-code: "https://github.com/biterik/ovito-auto-viz"
 url: "https://github.com/biterik/ovito-auto-viz"
 license: BSD-3-Clause

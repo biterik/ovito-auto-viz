@@ -1,5 +1,8 @@
 # ovito-auto-viz
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21796154.svg)](https://doi.org/10.5281/zenodo.21796154)
+[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
+
 Declarative, reproducible OVITO visualization of LAMMPS files.
 You describe the figure in a small YAML **viz card** — view, atom styling,
 analysis pipeline, annotations, output quality — and the `ovzm` CLI turns it
