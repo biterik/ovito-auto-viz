@@ -113,8 +113,38 @@ ovzm schema                            # print the JSON schema
 ```
 
 Every render writes a `.prov.yaml` sidecar AND embeds the same YAML into the
-PNG itself (compressed `tEXt` chunk, key `ovzm_prov`) — image and provenance
+PNG itself (compressed text chunk, key `ovzm_prov`) — image and provenance
 cannot be separated; `ovzm prov figure.png` recovers it from the image alone.
+
+### Reading the provenance inside a PNG
+
+The embedded record is a standard PNG text chunk, so it is accessible with or
+without this tool:
+
+```bash
+ovzm prov figure.png                    # with ovito-auto-viz installed
+ovzm prov figure.png > figure.prov.yaml # ... e.g. to regenerate a lost sidecar
+```
+
+Without `ovzm`, two lines of Python (Pillow):
+
+```python
+from PIL import Image
+print(Image.open("figure.png").text["ovzm_prov"])
+```
+
+or on the command line with common metadata tools:
+
+```bash
+exiftool -b -Ovzm_prov figure.png       # exiftool
+identify -verbose figure.png            # ImageMagick: listed under Properties
+```
+
+The chunk survives copying, renaming, emailing, and archiving — anything that
+treats the file as bytes. It does NOT survive operations that re-encode the
+pixels: screenshots, format conversion (PNG→JPEG), or "export/save for web"
+in image editors. For a figure that will be re-encoded (e.g. embedded in a
+PDF), keep the `.prov.yaml` sidecar alongside — it is the identical record.
 
 ### Comparison grids
 
