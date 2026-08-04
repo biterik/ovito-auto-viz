@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../schema/vizcard.schema.json
+# dxa-standard — canonical defect view of an fcc crystal:
+# PTM structure identification, DXA dislocation extraction, non-fcc atoms only,
+# Miller-labeled tripod, auto labels (b, xi, character, line lengths).
+name: dxa-standard
+crystal:
+  x: auto            # parse x-101_y1-21_z111 style filenames; override per card
+  lattice: fcc
+view:
+  direction: front
+  projection: ortho
+atoms:
+  show: non_fcc
+  radius: 1.0
+pipeline:
+  - ptm: {rmsd_cutoff: 0.12}
+  - dxa: {lattice: fcc}
+annotate:
+  tripod: miller
+  labels: auto
+  colorbar: true
+output:
+  preset: slide
+  background: white
+  file: auto

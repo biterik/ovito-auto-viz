@@ -1,0 +1,9 @@
+__pycache__/
+*.egg-info/
+dist/
+build/
+.DS_Store
+*.png
+*.mp4
+*.ovito
+*.prov.yaml

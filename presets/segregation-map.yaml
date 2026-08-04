@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=../schema/vizcard.schema.json
+# segregation-map — solute distribution view for binary alloys:
+# all atoms, colored by type, minority type rendered larger.
+name: segregation-map
+crystal:
+  x: auto
+  lattice: fcc
+view:
+  direction: front
+  projection: ortho
+atoms:
+  show: all
+  radius: {1: 0.5, 2: 1.1}     # majority small, solute large — override per card
+annotate:
+  tripod: miller
+  labels: auto
+output:
+  preset: slide
+  background: white
+  file: auto

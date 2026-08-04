@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: ovito-auto-viz
+abstract: >-
+  Declarative, reproducible OVITO visualization of LAMMPS files: YAML
+  viz-cards rendered to publication-quality images, comparison grids,
+  movies, or ready-to-open OVITO sessions, with all crystallographic
+  labels (Burgers vectors, line directions, character angles) computed
+  from the data itself and full provenance embedded in every output.
+type: software
+authors:
+  - family-names: Bitzek
+    given-names: Erik
+    orcid: "https://orcid.org/0000-0001-7430-3694"
+    email: e.bitzek@mpi-susmat.de
+    affiliation: >-
+      Max-Planck-Institut for Sustainable Materials, Düsseldorf, Germany;
+      Institute of Materials Simulation (WW8), Friedrich-Alexander-Universität
+      Erlangen-Nürnberg (FAU), Fürth, Germany
+repository-code: "https://github.com/biterik/ovito-auto-viz"
+url: "https://github.com/biterik/ovito-auto-viz"
+license: BSD-3-Clause
+version: 0.3.0
+date-released: 2026-08-04
+keywords:
+  - OVITO
+  - LAMMPS
+  - molecular dynamics
+  - dislocations
+  - visualization
+  - materials science
+  - reproducibility

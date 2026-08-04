@@ -1,0 +1,50 @@
+name: d90-dxa-top
+extends: dxa-standard
+input:
+  file: dump_min_sgcmc_d90_T300_dmu+0.903268.1530000.gz
+crystal:
+  x:
+  - -1
+  - 0
+  - 1
+  y:
+  - 1
+  - -2
+  - 1
+  z:
+  - 1
+  - 1
+  - 1
+  lattice: fcc
+view:
+  direction: top
+pipeline:
+- ptm:
+    rmsd_cutoff: 0.12
+- dxa:
+    lattice: fcc
+- slice:
+    normal:
+    - 0
+    - 0
+    - 1
+    distance: 125
+    width: 40
+atoms:
+  show: non_fcc
+  radius:
+    1: 0.8
+    2: 1.2
+  names:
+    1: Ni
+    2: Cu
+  color_by: type
+  colors:
+    1:
+    - 0.62
+    - 0.66
+    - 0.72
+    2:
+    - 0.9
+    - 0.45
+    - 0.1

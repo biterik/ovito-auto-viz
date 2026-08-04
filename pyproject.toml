@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ovito-auto-viz"
+version = "0.3.1"
+description = "Declarative, reproducible OVITO visualization of LAMMPS files: YAML viz-cards -> images, movies, or ready-to-open OVITO sessions."
+readme = "README.md"
+license = { text = "BSD-3-Clause" }
+authors = [{ name = "Erik Bitzek", email = "e.bitzek@mpi-susmat.de" }]
+requires-python = ">=3.9"
+dependencies = [
+    "ovito>=3.12",
+    "PyYAML>=6.0",
+    "jsonschema>=4.0",
+    "numpy",
+]
+
+[project.scripts]
+ovzm = "ovzm.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

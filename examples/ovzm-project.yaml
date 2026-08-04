@@ -1,0 +1,10 @@
+# ovzm-project.yaml — project-scoped attribution defaults for ovito-auto-viz.
+# Lives at the project root; found by walking up from any card or data file
+# below it. Per-key precedence: card meta > this file > ~/.config/ovzm/identity.yaml
+project: EAM-DISLOCS-Ni-Cu
+funding: NFDI-MatWerk (DFG 460247524)
+creator: Erik Bitzek        # default for this (single-user) project
+people:
+  Erik Bitzek:
+    affiliation: MPI for Sustainable Materials, Duesseldorf / FAU WW8, Fuerth
+    orcid: 0000-0001-7430-3694

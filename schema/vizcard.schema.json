@@ -1,0 +1,614 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/biterik/ovito-auto-viz/schema/vizcard.schema.json",
+  "title": "ovito-auto-viz viz card",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Short card name; used in auto-generated output file names."
+    },
+    "extends": {
+      "type": "string",
+      "description": "Preset to inherit from (name on the preset search path, or a path to a YAML file). Chains are allowed."
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Emitted by `ovzm import`; informational only."
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "LAMMPS dump/data file, .gz supported. Globs allowed; multiple matches are treated as trajectory frames."
+        },
+        "frames": {
+          "description": "Frame selection: 'all', 'last', an index, or [start, stop, step].",
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "all",
+                "last",
+                "first"
+              ]
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "minItems": 2,
+              "maxItems": 3
+            }
+          ]
+        }
+      },
+      "required": [
+        "file"
+      ]
+    },
+    "crystal": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Crystallographic orientation of the simulation frame. Give x plus y or z (cubic Miller triplets), or 'auto' to parse the x-101_y1-21_z111 filename convention.",
+      "properties": {
+        "x": {
+          "anyOf": [
+            {
+              "const": "auto"
+            },
+            {
+              "$ref": "#/$defs/miller"
+            }
+          ]
+        },
+        "y": {
+          "$ref": "#/$defs/miller"
+        },
+        "z": {
+          "$ref": "#/$defs/miller"
+        },
+        "lattice": {
+          "type": "string",
+          "enum": [
+            "fcc",
+            "bcc",
+            "hcp",
+            "diamond"
+          ]
+        }
+      }
+    },
+    "view": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "direction": {
+          "description": "Named view (sim frame) or Miller direction (crystal frame; camera looks at the structure from that side).",
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "top",
+                "bottom",
+                "front",
+                "back",
+                "left",
+                "right"
+              ]
+            },
+            {
+              "$ref": "#/$defs/miller"
+            }
+          ]
+        },
+        "up": {
+          "$ref": "#/$defs/miller",
+          "description": "Optional up direction (crystal frame for Miller views)."
+        },
+        "projection": {
+          "type": "string",
+          "enum": [
+            "ortho",
+            "perspective"
+          ],
+          "default": "ortho"
+        },
+        "zoom": {
+          "description": "'fit' (default) or a magnification factor relative to fit.",
+          "anyOf": [
+            {
+              "const": "fit"
+            },
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          ]
+        },
+        "direction_sim_frame": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "Raw sim-frame camera direction (written by `ovzm import`)."
+        },
+        "fit_margin": {
+          "type": "number",
+          "exclusiveMinimum": 1.0,
+          "description": "Enlarge the field of view beyond tight fit so overlays (tripod, labels, colorbar) land outside the projected cell. Default 1.15."
+        }
+      }
+    },
+    "atoms": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "radius": {
+          "description": "Uniform radius in \u00c5, or a map of type id/name -> radius.",
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            }
+          ]
+        },
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "description": "Map of type id/name -> RGB in [0,1]."
+        },
+        "show": {
+          "type": "string",
+          "description": "'all', 'non_fcc', 'non_bcc', 'defects_only', or a raw OVITO boolean expression selecting the atoms to KEEP."
+        },
+        "names": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Map of type id -> species name (e.g. {1: Ni, 2: Cu}); used in labels and legends."
+        },
+        "color_by": {
+          "type": "string",
+          "enum": [
+            "type",
+            "structure"
+          ],
+          "description": "'structure' = PTM/CNA structure colors (default); 'type' = per-type colors (default when atoms.colors is given)."
+        }
+      }
+    },
+    "pipeline": {
+      "type": "array",
+      "description": "Ordered analysis steps. Each entry is a bare name or {name: {params}}.",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "enum": [
+              "wrap",
+              "delete_selected"
+            ]
+          },
+          {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "ptm": {
+                "type": "object",
+                "properties": {
+                  "rmsd_cutoff": {
+                    "type": "number"
+                  },
+                  "orientations": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "cna": {
+                "type": "object",
+                "properties": {
+                  "cutoff": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "dxa": {
+                "type": "object",
+                "properties": {
+                  "lattice": {
+                    "type": "string",
+                    "enum": [
+                      "fcc",
+                      "bcc",
+                      "hcp",
+                      "diamond"
+                    ]
+                  },
+                  "circuit_length": {
+                    "type": "integer"
+                  },
+                  "only_perfect": {
+                    "type": "boolean"
+                  },
+                  "line_smoothing": {
+                    "type": "integer"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "grain_segmentation": {
+                "type": "object",
+                "properties": {
+                  "merge_threshold": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "color_coding": {
+                "type": "object",
+                "properties": {
+                  "property": {
+                    "type": "string"
+                  },
+                  "range": {
+                    "anyOf": [
+                      {
+                        "const": "auto"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 2,
+                        "maxItems": 2
+                      }
+                    ]
+                  },
+                  "map": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "property"
+                ],
+                "additionalProperties": false
+              },
+              "slice": {
+                "type": "object",
+                "properties": {
+                  "normal": {
+                    "$ref": "#/$defs/miller"
+                  },
+                  "distance": {
+                    "type": "number"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "inverse": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "select_type": {
+                "type": "object",
+                "properties": {
+                  "property": {
+                    "type": "string"
+                  },
+                  "types": {
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "types"
+                ],
+                "additionalProperties": false
+              },
+              "select_expression": {
+                "type": "object",
+                "properties": {
+                  "expr": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "expr"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "annotate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tripod": {
+          "type": "string",
+          "enum": [
+            "miller",
+            "xyz",
+            "off"
+          ],
+          "description": "'miller' labels axes with crystal directions (needs crystal orientation)."
+        },
+        "tripod_corner": {
+          "$ref": "#/$defs/corner"
+        },
+        "tripod_size": {
+          "type": "number"
+        },
+        "colorbar": {
+          "description": "true/false, or {title, units, corner, font_size, format}.",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "units": {
+                  "type": "string"
+                },
+                "corner": {
+                  "$ref": "#/$defs/corner"
+                },
+                "font_size": {
+                  "type": "number"
+                },
+                "format": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "labels": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "off"
+          ],
+          "description": "'auto' composes step, composition, and DXA results (b, \u03be, character, lengths) from the data itself \u2014 no metadata required."
+        },
+        "labels_corner": {
+          "$ref": "#/$defs/corner"
+        },
+        "labels_font_size": {
+          "type": "number"
+        },
+        "labels_color": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "extra": {
+          "description": "Extra caption line(s) appended verbatim.",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "dxa_line_width": {
+          "type": "number",
+          "description": "Dislocation line width in \u00c5 (default 2.0)."
+        }
+      }
+    },
+    "tripods": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Per-grain tripods for polycrystals (roadmap: rendered via a custom viewport overlay).",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "global",
+            "per_grain"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "description": "'auto' (grain segmentation) or a grains file: space-separated columns id cx cy cz + orientation (quaternion or two Miller axes)."
+        },
+        "labels": {
+          "type": "string",
+          "enum": [
+            "miller",
+            "off"
+          ]
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "preset": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "slide",
+            "paper"
+          ],
+          "description": "draft=1280x720 fast; slide=1920x1080; paper=3200x2400 with ambient occlusion."
+        },
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "renderer": {
+          "type": "string",
+          "enum": [
+            "opengl",
+            "tachyon-fast",
+            "tachyon",
+            "tachyon-ao",
+            "ospray"
+          ]
+        },
+        "background": {
+          "type": "string",
+          "description": "'white', 'black', or 'transparent'."
+        },
+        "file": {
+          "type": "string",
+          "description": "'auto' derives <input>__<cardname>.png next to the cwd."
+        },
+        "movie": {
+          "type": "boolean",
+          "description": "Force movie output for multi-frame inputs."
+        },
+        "fps": {
+          "type": "integer"
+        },
+        "tag": {
+          "type": "string",
+          "description": "Optional variant tag appended to the figure ID: <input-stem>__<card-name>__<tag>."
+        }
+      }
+    },
+    "grid": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Comparison-grid mode (ovzm grid): render this card over several inputs with identical camera, scale, styling, and colorbar limits.",
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2,
+          "description": "Input files (globs allowed); each becomes one panel."
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Panel titles; defaults to the input file stems."
+        },
+        "cols": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "description": "Grid columns (default: 2 for <=4 panels, else 3)."
+        },
+        "tripod": {
+          "type": "string",
+          "enum": [
+            "first",
+            "all"
+          ],
+          "description": "Draw tripod+legend on the first panel only (default) or on every panel."
+        }
+      },
+      "required": [
+        "inputs"
+      ]
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Figure attribution, recorded in the provenance (sidecar + embedded PNG). Resolved per key: card > ovzm-project.yaml (found by walking up from the card / input data, git-config style) > ~/.config/ovzm/identity.yaml. creator is MANDATORY; everything else may stay empty.",
+      "properties": {
+        "creator": {
+          "type": "string",
+          "description": "Person creating this figure. Required (card, project file, identity file, or --ask)."
+        },
+        "project": {
+          "type": "string",
+          "description": "Related project (optional; usually from ovzm-project.yaml)."
+        },
+        "funding": {
+          "type": "string",
+          "description": "Funding acknowledgment (optional; usually from ovzm-project.yaml)."
+        },
+        "affiliation": {
+          "type": "string",
+          "description": "Creator's affiliation FOR THIS PROJECT (optional; project file or its people: map)."
+        },
+        "email": {
+          "type": "string",
+          "description": "Optional contact email."
+        },
+        "orcid": {
+          "type": "string",
+          "description": "Optional ORCID iD."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "miller": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "corner": {
+      "type": "string",
+      "enum": [
+        "top_left",
+        "top_right",
+        "bottom_left",
+        "bottom_right"
+      ]
+    }
+  }
+}
