@@ -157,7 +157,7 @@
           },
           "minItems": 3,
           "maxItems": 3,
-          "description": "World-space point (Å, sim frame) to center the view on; combine with zoom for close-ups."
+          "description": "World-space point (\u00c5, sim frame) to center the view on; combine with zoom for close-ups."
         }
       }
     },
@@ -467,6 +467,10 @@
         "dxa_line_width": {
           "type": "number",
           "description": "Dislocation line width in \u00c5 (default 2.0)."
+        },
+        "defect_mesh": {
+          "type": "boolean",
+          "description": "Render DXA's translucent defect/interface mesh (default true). Set false for clean line-and-atoms figures."
         }
       }
     },
@@ -495,7 +499,7 @@
             "size": {
               "type": "number",
               "exclusiveMinimum": 0,
-              "description": "Arm length in Å (world-anchored, so apparent size scales with zoom and matches across grid panels). Default: 5% of the largest box edge, min 10 Å."
+              "description": "Arm length in \u00c5 (world-anchored, so apparent size scales with zoom and matches across grid panels). Default: 5% of the largest box edge, min 10 \u00c5."
             },
             "axes": {
               "$ref": "#/$defs/armaxes",
@@ -653,7 +657,7 @@
           },
           "minItems": 3,
           "maxItems": 3,
-          "description": "Tripod anchor in Å, cartesian, simulation frame. REQUIRED."
+          "description": "Tripod anchor in \u00c5, cartesian, simulation frame. REQUIRED."
         },
         "x": {
           "$ref": "#/$defs/miller",

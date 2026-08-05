@@ -347,6 +347,12 @@ def _prepare(card_path: str, *, ask: bool = False):
             data.dislocations.vis.show_burgers_vectors = False
         except Exception:
             pass
+    if not (card.get("annotate") or {}).get("defect_mesh", True):
+        try:  # hide DXA's translucent interface mesh
+            for key in list(getattr(data, "surfaces", {}) or {}):
+                data.surfaces[key].vis.enabled = False
+        except Exception:
+            pass
     label_text = build_label_text(card, data, orientation, dxa, full_data)
     vp = make_viewport(card, orientation)
     pipe.add_to_scene()

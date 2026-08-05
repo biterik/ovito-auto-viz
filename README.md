@@ -165,6 +165,25 @@ ovzm validate my-figure.yaml           # schema check with readable errors
 ovzm schema                            # print the JSON schema
 ```
 
+## Try it in five minutes
+
+`examples/try-it/` is fully self-contained — nothing to download: a
+numpy-only script generates a small fcc Ni box with four edge dislocations
+(a quadrupole — a closed system with **net b = 0**), and one card renders it
+with every label computed from the positions alone:
+
+```bash
+cd examples/try-it
+python make_edge_dipoles.py           # ~14k atoms, a few seconds
+ovzm render edge-dipoles.yaml --ask   # asks once who you are — attribution is mandatory
+ovzm prov edge-dipoles__edge-dipoles.png
+```
+
+See [`examples/try-it/README.md`](examples/try-it/README.md) for the
+walkthrough and the expected (computed) label block;
+`tests/test_example_physics.py` asserts the DXA ground truth of this
+example in CI.
+
 ## Using it with an LLM (the agent skill)
 
 `skills/ovito-auto-viz/SKILL.md` is an

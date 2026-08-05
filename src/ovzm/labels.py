@@ -146,7 +146,9 @@ def dxa_summary(data, orientation: Orientation | None, *, max_segments=6) -> dic
     if segs:
         net = np.sum([np.asarray(s.spatial_burgers_vector) for s in segs], axis=0)
         max_b = max(np.linalg.norm(np.asarray(s.spatial_burgers_vector)) for s in segs)
-        if np.linalg.norm(net) > 0.3 * max_b and a_estimates:
+        if np.linalg.norm(net) <= 0.3 * max_b and len(segs) > 1:
+            out["net"] = {"b": "0", "zero": True}
+        elif np.linalg.norm(net) > 0.3 * max_b and a_estimates:
             a_est = float(np.mean(a_estimates))
             xi_main = segment_line_direction(np.asarray(segs[0].points))
             ang = character_angle(net, xi_main)
@@ -199,7 +201,10 @@ def build_label_text(card, data, orientation, dxa, full_data=None) -> str:
                      f"L = {dxa['total_length']:.0f} Å")
         if dxa.get("net", {}).get("b"):
             net = dxa["net"]
-            lines.append(f"  net b = {net['b']}, {net['char_angle']:.0f}° {net['char']}")
+            if net.get("zero"):
+                lines.append("  net b = 0 (closed box)")
+            else:
+                lines.append(f"  net b = {net['b']}, {net['char_angle']:.0f}° {net['char']}")
         for s in dxa["shown_segments"]:
             xi = f", ξ = {s['xi']}" if "xi" in s else ""
             ch = (f", {s['char_angle']:.0f}° {s['char']}"

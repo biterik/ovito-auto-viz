@@ -8,3 +8,4 @@ build/
 *.ovito
 *.prov.yaml
 .pytest_cache/
+examples/try-it/*.dump

@@ -43,6 +43,7 @@ run `python tools/gen-schema-md.py` after changing the schema.
 | `annotate.labels_color` | array of number |  |
 | `annotate.extra` | string or array of string | Extra caption line(s) appended verbatim. |
 | `annotate.dxa_line_width` | number | Dislocation line width in Å (default 2.0). |
+| `annotate.defect_mesh` | boolean | Render DXA's translucent defect/interface mesh (default true). Set false for clean line-and-atoms figures. |
 | `grains` | object | Per-grain coordinate tripods (bicrystals, polycrystals): one labeled tripod per grain, anchored at a user-provided origin and oriented per user-provided x/y/z Miller triplets (same semantics as the crystal: block, but per grain). Give EXACTLY ONE of 'file' or 'items'. Origins and orientations are never guessed. |
 | `grains.file` | string | External grains file (path relative to the card): a YAML mapping with a top-level grains: list whose entries have the same shape as items. |
 | `grains.items` | array of grain | Inline grain list (alternative to file). |

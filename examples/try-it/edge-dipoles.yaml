@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=../../src/ovzm/schema/vizcard.schema.json
+# Try-it example: an edge-dislocation dipole in fcc Ni (generated, full PBC).
+# Everything the figure says about the dislocations (b, xi, character, a)
+# is computed by ovzm/DXA from the atom positions alone.
+name: edge-dipoles
+extends: dxa-standard
+input:
+  file: edge-dipoles.dump
+crystal:
+  x: [1, -1, 0]
+  y: [1, 1, 1]
+  z: [-1, -1, 2]
+  lattice: fcc
+view:
+  direction: [1, -3, 9]     # oblique Miller view: both lines visible in depth
+  up: [1, 1, 1]
+  projection: perspective
+atoms:
+  show: non_fcc
+  names: {1: Ni}
+annotate:
+  colorbar: false
+  dxa_line_width: 3.0
+  defect_mesh: false
+output:
+  preset: slide
