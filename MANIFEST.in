@@ -1,0 +1,3 @@
+include LICENSE README.md CITATION.cff
+recursive-include src/ovzm/presets *.yaml
+recursive-include src/ovzm/schema *.json

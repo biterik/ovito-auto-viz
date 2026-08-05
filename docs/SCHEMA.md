@@ -1,6 +1,6 @@
 # Viz-card schema reference
 
-Generated from `schema/vizcard.schema.json` — do not edit by hand;
+Generated from `src/ovzm/schema/vizcard.schema.json` — do not edit by hand;
 run `python tools/gen-schema-md.py` after changing the schema.
 
 | key | type | description |

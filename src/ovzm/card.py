@@ -27,7 +27,22 @@ except ImportError:  # validation becomes a no-op; runner still works
 PKG_ROOT = Path(__file__).resolve().parent
 REPO_ROOT = PKG_ROOT.parent.parent  # src/ovzm -> repo root (editable install / checkout)
 
+# Presets and the card schema are PACKAGE DATA: they live inside src/ovzm/ so
+# that they ship in the wheel. Before 0.3.2 they sat at the repo root, which
+# meant a non-editable install silently had neither. Keep the legacy locations
+# in the search order so old checkouts keep working.
+PRESET_DIR = PKG_ROOT / "presets"
+SCHEMA_PATH = PKG_ROOT / "schema" / "vizcard.schema.json"
+
 _SCHEMA_CACHE = None
+
+
+class SchemaUnavailableError(RuntimeError):
+    """The bundled card schema could not be loaded — the install is broken.
+
+    Raised rather than silently skipping validation: a no-op validator that
+    reports success is worse than no validator at all.
+    """
 
 
 def _preset_search_paths():
@@ -36,8 +51,8 @@ def _preset_search_paths():
     if os.environ.get("OVZM_PRESET_PATH"):
         paths += [Path(p) for p in os.environ["OVZM_PRESET_PATH"].split(":") if p]
     paths.append(Path.cwd() / "presets")
-    paths.append(REPO_ROOT / "presets")
-    paths.append(PKG_ROOT / "presets")  # wheel-installed copy
+    paths.append(REPO_ROOT / "presets")  # legacy repo-root layout (pre-0.3.2)
+    paths.append(PRESET_DIR)             # shipped with the package
     return paths
 
 
@@ -67,22 +82,48 @@ def deep_merge(base: dict, override: dict) -> dict:
     return out
 
 
-def load_schema() -> dict | None:
+def _schema_search_paths():
+    return (
+        SCHEMA_PATH,                                        # shipped with the package
+        REPO_ROOT / "schema" / "vizcard.schema.json",        # legacy repo-root layout
+        PKG_ROOT / "vizcard.schema.json",                    # legacy flat copy
+    )
+
+
+def load_schema() -> dict:
+    """Load the bundled viz-card JSON schema.
+
+    Raises SchemaUnavailableError if it cannot be found anywhere — that means
+    the package data did not get installed, and every card would otherwise
+    "validate" successfully against nothing.
+    """
     global _SCHEMA_CACHE
     if _SCHEMA_CACHE is None:
-        for cand in (REPO_ROOT / "schema" / "vizcard.schema.json",
-                     PKG_ROOT / "vizcard.schema.json"):
+        for cand in _schema_search_paths():
             if cand.is_file():
                 _SCHEMA_CACHE = json.loads(cand.read_text())
                 break
+        else:
+            raise SchemaUnavailableError(
+                "the viz-card schema is missing from this ovito-auto-viz "
+                "install (searched: "
+                + ", ".join(str(p) for p in _schema_search_paths())
+                + "). The package data was not installed correctly — reinstall "
+                "with 'pip install ovito-auto-viz', or from a checkout with "
+                "'pip install -e <repo>'."
+            )
     return _SCHEMA_CACHE
 
 
 def validate(card: dict) -> list[str]:
     """Return a list of human-readable validation problems (empty = ok)."""
-    schema = load_schema()
-    if schema is None or jsonschema is None:
-        return []
+    schema = load_schema()  # raises SchemaUnavailableError on a broken install
+    if jsonschema is None:
+        raise SchemaUnavailableError(
+            "the 'jsonschema' package is required to validate viz cards but is "
+            "not importable; it is a declared dependency, so this install is "
+            "incomplete — reinstall ovito-auto-viz."
+        )
     validator = jsonschema.Draft202012Validator(schema)
     problems = []
     for err in sorted(validator.iter_errors(card), key=lambda e: list(e.absolute_path)):

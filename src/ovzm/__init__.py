@@ -10,7 +10,7 @@
 # License: BSD-3-Clause (see LICENSE)
 # ---------------------------------------------------------------------------
 """ovito-auto-viz: declarative, reproducible OVITO visualization via YAML viz-cards."""
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 REPO_URL = "https://github.com/biterik/ovito-auto-viz"
 TOOL_CREDIT = (

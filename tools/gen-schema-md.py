@@ -10,12 +10,13 @@
 # project number 460247524 (NFDI-MatWerk consortium).
 # License: BSD-3-Clause (see LICENSE)
 # ---------------------------------------------------------------------------
-"""Generate docs/SCHEMA.md from schema/vizcard.schema.json."""
+"""Generate docs/SCHEMA.md from src/ovzm/schema/vizcard.schema.json."""
 import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-schema = json.loads((ROOT / "schema" / "vizcard.schema.json").read_text())
+SCHEMA = ROOT / "src" / "ovzm" / "schema" / "vizcard.schema.json"
+schema = json.loads(SCHEMA.read_text())
 
 
 def typestr(node):
@@ -47,7 +48,7 @@ def walk(props, prefix, lines):
 lines = [
     "# Viz-card schema reference",
     "",
-    "Generated from `schema/vizcard.schema.json` — do not edit by hand;",
+    "Generated from `src/ovzm/schema/vizcard.schema.json` — do not edit by hand;",
     "run `python tools/gen-schema-md.py` after changing the schema.",
     "",
     "| key | type | description |",

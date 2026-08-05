@@ -64,15 +64,22 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     if args.cmd == "schema":
-        from .card import load_schema
-        print(json.dumps(load_schema(), indent=2))
+        from .card import SchemaUnavailableError, load_schema
+        try:
+            print(json.dumps(load_schema(), indent=2))
+        except SchemaUnavailableError as exc:
+            print(f"[ovzm] {exc}", file=sys.stderr)
+            return 1
         return 0
 
     if args.cmd == "validate":
-        from .card import load_card
+        from .card import SchemaUnavailableError, load_card
         try:
             load_card(args.card)
-        except ValueError as exc:
+        except SchemaUnavailableError as exc:
+            print(f"[ovzm] {exc}", file=sys.stderr)
+            return 1
+        except (ValueError, FileNotFoundError) as exc:
             print(str(exc), file=sys.stderr)
             return 1
         print("ok")

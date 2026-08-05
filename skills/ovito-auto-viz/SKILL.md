@@ -19,10 +19,10 @@ IS the deliverable the user can rerun, tweak, and version.
 
 `ovzm` needs the `ovito` Python module, so it runs wherever you have a real
 shell — typically a disposable Linux sandbox/container, not the user's own
-machine. Never install into a user's system Python or touch their existing
+machine. Never install into a user's system Python or disturb their existing
 environments; on their own workstation they install it themselves into a
 conda env or venv. If the data lives on the user's machine, stage it in,
-render locally, and hand back the image plus its `.prov.yaml` sidecar.
+render where you are, and hand back the image plus its `.prov.yaml` sidecar.
 
 ## Required information — ask, never guess
 
@@ -43,19 +43,18 @@ These must come from the user if not auto-detectable; ask for them explicitly
 
 ## Workflow
 
-1. Check `ovzm --help`. If missing, clone and install **editable** — the
-   editable install is required, `presets/` and `schema/` are not yet shipped
-   as package data (~2 min):
+1. Check `ovzm --help`. If missing, install it (~2 min):
 
    ```bash
-   git clone https://github.com/biterik/ovito-auto-viz.git
-   pip install -e ovito-auto-viz          # add --break-system-packages in a throwaway container
+   pip install git+https://github.com/biterik/ovito-auto-viz.git   # add --break-system-packages in a throwaway container
    apt-get install -y libopengl0 libegl1 libgl1 libglx0 libxkbcommon0   # ovito's GL runtime
    ```
 
-   Confirm with `ovzm schema | head -3` — if it prints `null`, the install is
-   non-editable and `extends:` will fail. Then read `presets/` in the clone
-   for available bases and `docs/SCHEMA.md` for every key.
+   Sanity-check with `ovzm schema | head -3` — it must print JSON. (Versions
+   before 0.3.2 did not ship the presets or the schema in the wheel; there
+   `ovzm schema` prints `null` and `extends:` fails, and you need an editable
+   install from a clone instead.) Clone the repo if you want to read
+   `src/ovzm/presets/` for available bases and `docs/SCHEMA.md` for every key.
 2. Compose a card that `extends:` the closest preset (`dxa-standard` for
    defect/dislocation views, `segregation-map` for solute distribution) and
    overrides only what the task needs.

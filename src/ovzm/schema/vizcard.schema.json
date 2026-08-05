@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/biterik/ovito-auto-viz/schema/vizcard.schema.json",
+  "$id": "https://github.com/biterik/ovito-auto-viz/src/ovzm/schema/vizcard.schema.json",
   "title": "ovito-auto-viz viz card",
   "type": "object",
   "additionalProperties": false,

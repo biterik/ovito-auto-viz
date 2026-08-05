@@ -72,18 +72,20 @@ installing one globally is a good way to break the OS package manager).
 
 ```bash
 conda activate <your-env>                        # or: source <your-venv>/bin/activate
-pip install -e /absolute/path/to/ovito-auto-viz  # editable install from a clone
+pip install git+https://github.com/biterik/ovito-auto-viz.git
 ```
 
-This pulls in the [`ovito`](https://pypi.org/project/ovito/) module and puts
-the `ovzm` CLI on your `PATH` inside that environment.
+From a clone, for development:
 
-> **Install from a clone, editable (`-e`).** `presets/` and
-> `schema/vizcard.schema.json` live at the repo root and are not yet shipped
-> as package data, so a non-editable install
-> (`pip install git+https://github.com/biterik/ovito-auto-viz.git`) yields a
-> CLI that cannot resolve `extends:` presets and whose `ovzm schema` prints
-> `null`. This is fixed before the PyPI release.
+```bash
+pip install -e /absolute/path/to/ovito-auto-viz
+```
+
+Either route pulls in the [`ovito`](https://pypi.org/project/ovito/) module,
+puts the `ovzm` CLI on your `PATH`, and installs the presets and the card
+schema as package data. Check it landed correctly with `ovzm schema | head -3`
+— that must print JSON, and `ovzm validate` on a card with `extends:` must
+resolve the preset.
 
 Headless Linux (cluster, CI) additionally needs the GL runtime the module
 links against:
@@ -238,7 +240,8 @@ per-type legend when coloring by species.
 ## Presets
 
 Cards inherit via `extends:` (chains allowed; search path: `$OVZM_PRESET_PATH`,
-`./presets/`, repo `presets/`). Shipped:
+then `./presets/`, then the presets bundled with the package in
+`src/ovzm/presets/`). Shipped:
 
 - `dxa-standard` — PTM + DXA, non-fcc atoms only, Miller tripod, auto labels.
 - `segregation-map` — all atoms colored by type, solute rendered larger.
@@ -257,8 +260,9 @@ well above every OVITO method's noise floor.
 
 ## Documentation
 
-- `docs/SCHEMA.md` — every card key, generated from `schema/vizcard.schema.json`
-  (regenerate with `python tools/gen-schema-md.py`).
+- `docs/SCHEMA.md` — every card key, generated from
+  `src/ovzm/schema/vizcard.schema.json` (regenerate with
+  `python tools/gen-schema-md.py`).
 - Put `# yaml-language-server: $schema=<path>/vizcard.schema.json` at the top
   of a card for editor autocompletion.
 - `skills/ovito-auto-viz/SKILL.md` — teaches LLM/agent sessions the card
