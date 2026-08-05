@@ -4,11 +4,12 @@
 [![CI](https://github.com/biterik/ovito-auto-viz/actions/workflows/ci.yml/badge.svg)](https://github.com/biterik/ovito-auto-viz/actions/workflows/ci.yml)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
 
-**Automated, reproducible and FAIR visualization of atomistic simulations
-with [OVITO](https://www.ovito.org) — self-labeling figures with complete
-metadata and provenance.**
+**Fast, automated, reproducible and FAIR visualization of atomistic
+simulations with [OVITO](https://www.ovito.org/) — self-labeling figures
+with complete metadata and provenance.**
 
-You describe the figure in a ~20-line YAML **viz card**; the `ovzm` CLI turns
+You — or the LLM of your choice — describe the figure in a ~20-line YAML
+**viz card**; the `ovzm` CLI turns
 it into a publication-quality image, movie, or ready-to-open OVITO session.
 Everything on the figure — Burgers vectors, line directions, character
 angles, composition, colorbars, per-grain tripods — is **computed from the
@@ -18,19 +19,12 @@ which publication it belongs to: the full provenance record is embedded
 inside the PNG. Works hands-on, in scripts, on HPC clusters — and
 conversationally through an LLM agent skill.
 
-![W grain-boundary crack with phosphorus segregation](docs/readme-hero.png)
+![From simulation to figure and provenance in one step](docs/graphical-abstract.png)
 
-*A crack in tungsten runs in from the left, kinks onto a phosphorus-decorated
-grain boundary, and continues along it (bcc W dark gray, defective atoms
-white, P orange, one Miller-labeled tripod per grain). Configuration from
-[Tian et al., Acta Materialia 259 (2023) 119256](https://doi.org/10.1016/j.actamat.2023.119256).
-This image was rendered by `ovzm` from a small text card — and it carries its
-own receipt. Clone the repo and ask the picture where it comes from:*
-
-```bash
-ovzm prov docs/readme-hero.png     # prints creator, input file + SHA-256,
-                                   # the resolved card, and the paper's DOI
-```
+*The whole story in one picture: a LAMMPS dump and the simulation project's
+context go in; a ~20-line **viz card** — written by you or by an AI agent —
+tells `ovzm render` what the figure is; out come a publication-ready image
+AND its complete provenance, embedded inside the PNG itself.*
 
 ## Why
 
@@ -62,6 +56,24 @@ from their data the moment they are exported. `ovzm` inverts this:
   your project directory, and asks (never guesses) whatever the data cannot
   provide. The tool itself requires no AI; the skill is an optional adapter
   on top.
+
+## The showcase figure
+
+![W grain-boundary crack with phosphorus segregation](docs/readme-hero.png)
+
+*A crack in tungsten runs in from the left, kinks onto a phosphorus-decorated
+grain boundary, and continues along it (bcc W dark gray, defective atoms
+white, P orange, one Miller-labeled tripod per grain — CNA + the
+`structure_colors`/pinned-species styling and the `grains:` tripods, all from
+one card). Configuration from
+[Tian et al., Acta Materialia 259 (2023) 119256](https://doi.org/10.1016/j.actamat.2023.119256).
+The image carries its own receipt — clone the repo and ask it where it comes
+from:*
+
+```bash
+ovzm prov docs/readme-hero.png     # prints creator, input file + SHA-256,
+                                   # the resolved card, and the paper's DOI
+```
 
 ## Install
 
