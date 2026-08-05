@@ -24,7 +24,12 @@ import numpy as np
 def miller_str(v, *, frac=None) -> str:
     """[-1,0,1] -> '[-101]'; overbar-free ASCII form. frac prefixes e.g. '1/2'."""
     ints = smallest_ints(v)
-    body = "".join(_digit(i) for i in ints)
+    if any(abs(i) > 9 for i in ints):
+        # multi-digit indices concatenate ambiguously ('[2-1311]');
+        # space-separate them: '[2 -13 11]'
+        body = " ".join(str(i) for i in ints)
+    else:
+        body = "".join(_digit(i) for i in ints)
     return f"{frac}[{body}]" if frac else f"[{body}]"
 
 
