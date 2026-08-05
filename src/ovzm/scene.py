@@ -228,6 +228,16 @@ def add_grain_tripods(vp: Viewport, grains):
     """
     if not grains or not grains.get("grains"):
         return
+    # The overlay paints text with QPainter, which needs a QGuiApplication.
+    # Native overlays (labels/legend) construct one as a side effect, but a
+    # card with labels off + colorbar false has none -> hard abort in
+    # QFontDatabase. Ensure the app exists BEFORE render time.
+    from ovito.qt_compat import QtGui
+    if QtGui.QGuiApplication.instance() is None:
+        import os
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        global _QAPP
+        _QAPP = QtGui.QGuiApplication(["ovzm"])
     # same x/y/z color convention as the corner tripod (its axis defaults)
     ref = CoordinateTripodOverlay()
     axis_colors = [tuple(float(c) for c in col) for col in
