@@ -23,12 +23,14 @@ run `python tools/gen-schema-md.py` after changing the schema.
 | `view.zoom` | `fit` or number | 'fit' (default) or a magnification factor relative to fit. |
 | `view.direction_sim_frame` | array of number | Raw sim-frame camera direction (written by `ovzm import`). |
 | `view.fit_margin` | number | Enlarge the field of view beyond tight fit so overlays (tripod, labels, colorbar) land outside the projected cell. Default 1.15. |
+| `view.center` | array of number | World-space point (Å, sim frame) to center the view on; combine with zoom for close-ups. |
 | `atoms` | object |  |
 | `atoms.radius` | number or object | Uniform radius in Å, or a map of type id/name -> radius. |
 | `atoms.colors` | object | Map of type id/name -> RGB in [0,1]. |
 | `atoms.show` | string | 'all', 'non_fcc', 'non_bcc', 'defects_only', or a raw OVITO boolean expression selecting the atoms to KEEP. |
 | `atoms.names` | object | Map of type id -> species name (e.g. {1: Ni, 2: Cu}); used in labels and legends. |
 | `atoms.color_by` | `type` | `structure` | 'structure' = PTM/CNA structure colors (default); 'type' = per-type colors (default when atoms.colors is given). |
+| `atoms.structure_colors` | object | Map of structure name (other, fcc, hcp, bcc, ico, cubic_diamond, hexagonal_diamond) -> RGB in [0,1]; applies when color_by is 'structure'. Types listed in atoms.colors keep their per-type color (pinned) even in structure mode. |
 | `pipeline` | array of `wrap` | `delete_selected` or object | Ordered analysis steps. Each entry is a bare name or {name: {params}}. |
 | `annotate` | object |  |
 | `annotate.tripod` | `miller` | `xyz` | `off` | 'miller' labels axes with crystal directions (needs crystal orientation). |
@@ -41,10 +43,13 @@ run `python tools/gen-schema-md.py` after changing the schema.
 | `annotate.labels_color` | array of number |  |
 | `annotate.extra` | string or array of string | Extra caption line(s) appended verbatim. |
 | `annotate.dxa_line_width` | number | Dislocation line width in Å (default 2.0). |
-| `tripods` | object | Per-grain tripods for polycrystals (roadmap: rendered via a custom viewport overlay). |
-| `tripods.mode` | `global` | `per_grain` |  |
-| `tripods.source` | string | 'auto' (grain segmentation) or a grains file: space-separated columns id cx cy cz + orientation (quaternion or two Miller axes). |
-| `tripods.labels` | `miller` | `off` |  |
+| `grains` | object | Per-grain coordinate tripods (bicrystals, polycrystals): one labeled tripod per grain, anchored at a user-provided origin and oriented per user-provided x/y/z Miller triplets (same semantics as the crystal: block, but per grain). Give EXACTLY ONE of 'file' or 'items'. Origins and orientations are never guessed. |
+| `grains.file` | string | External grains file (path relative to the card): a YAML mapping with a top-level grains: list whose entries have the same shape as items. |
+| `grains.items` | array of grain | Inline grain list (alternative to file). |
+| `grains.tripod` | object | Tripod styling, all optional. |
+| `grains.tripod.size` | number | Arm length in Å (world-anchored, so apparent size scales with zoom and matches across grid panels). Default: 5% of the largest box edge, min 10 Å. |
+| `grains.tripod.axes` | armaxes | Global default arm mode: 'box' (arms along the sim-box axes, labeled with each grain's x/y/z triplets) or a list of 3 Miller triplets drawn in each grain's own crystal frame. Per-grain axes overrides this. |
+| `grains.tripod.show_names` | boolean | Draw the grain name near the tripod origin. |
 | `output` | object |  |
 | `output.preset` | `draft` | `slide` | `paper` | draft=1280x720 fast; slide=1920x1080; paper=3200x2400 with ambient occlusion. |
 | `output.width` | integer |  |
@@ -89,3 +94,8 @@ or single-key mappings `{name: {params}}`:
 - `miller` — a 3-vector of numbers, interpreted as a cubic Miller
   direction (crystal frame) or a sim-frame vector depending on context.
 - `corner` — `top_left`, `top_right`, `bottom_left`, `bottom_right`.
+- `grain` — one per-grain tripod entry: required `origin` (Å, sim frame)
+  and `x`/`y`/`z` (Miller triplets of the sim-box axes in the grain's
+  crystal frame), optional `name` and per-grain `axes` override.
+- `armaxes` — `box` (arms along the sim-box axes) or a list of exactly
+  3 Miller triplets drawn in the grain's own crystal frame.

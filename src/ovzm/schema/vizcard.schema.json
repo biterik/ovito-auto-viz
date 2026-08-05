@@ -149,6 +149,15 @@
           "type": "number",
           "exclusiveMinimum": 1.0,
           "description": "Enlarge the field of view beyond tight fit so overlays (tripod, labels, colorbar) land outside the projected cell. Default 1.15."
+        },
+        "center": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "World-space point (Å, sim frame) to center the view on; combine with zoom for close-ups."
         }
       }
     },
@@ -202,6 +211,20 @@
             "structure"
           ],
           "description": "'structure' = PTM/CNA structure colors (default); 'type' = per-type colors (default when atoms.colors is given)."
+        },
+        "structure_colors": {
+          "type": "object",
+          "description": "Map of structure name (other, fcc, hcp, bcc, ico, cubic_diamond, hexagonal_diamond) -> RGB in [0,1]; applies when color_by is 'structure'. Types listed in atoms.colors keep their per-type color (pinned) even in structure mode.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "minItems": 3,
+            "maxItems": 3
+          }
         }
       }
     },
@@ -447,28 +470,42 @@
         }
       }
     },
-    "tripods": {
+    "grains": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Per-grain tripods for polycrystals (roadmap: rendered via a custom viewport overlay).",
+      "description": "Per-grain coordinate tripods (bicrystals, polycrystals): one labeled tripod per grain, anchored at a user-provided origin and oriented per user-provided x/y/z Miller triplets (same semantics as the crystal: block, but per grain). Give EXACTLY ONE of 'file' or 'items'. Origins and orientations are never guessed.",
       "properties": {
-        "mode": {
+        "file": {
           "type": "string",
-          "enum": [
-            "global",
-            "per_grain"
-          ]
+          "description": "External grains file (path relative to the card): a YAML mapping with a top-level grains: list whose entries have the same shape as items."
         },
-        "source": {
-          "type": "string",
-          "description": "'auto' (grain segmentation) or a grains file: space-separated columns id cx cy cz + orientation (quaternion or two Miller axes)."
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/grain"
+          },
+          "description": "Inline grain list (alternative to file)."
         },
-        "labels": {
-          "type": "string",
-          "enum": [
-            "miller",
-            "off"
-          ]
+        "tripod": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Tripod styling, all optional.",
+          "properties": {
+            "size": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Arm length in Å (world-anchored, so apparent size scales with zoom and matches across grid panels). Default: 5% of the largest box edge, min 10 Å."
+            },
+            "axes": {
+              "$ref": "#/$defs/armaxes",
+              "description": "Global default arm mode: 'box' (arms along the sim-box axes, labeled with each grain's x/y/z triplets) or a list of 3 Miller triplets drawn in each grain's own crystal frame. Per-grain axes overrides this."
+            },
+            "show_names": {
+              "type": "boolean",
+              "description": "Draw the grain name near the tripod origin."
+            }
+          }
         }
       }
     },
@@ -600,6 +637,60 @@
       },
       "minItems": 3,
       "maxItems": 3
+    },
+    "grain": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Optional grain name (defaults g1, g2, ...); duplicates are a hard error."
+        },
+        "origin": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "Tripod anchor in Å, cartesian, simulation frame. REQUIRED."
+        },
+        "x": {
+          "$ref": "#/$defs/miller",
+          "description": "Miller indices, in THIS grain's crystal frame, of the sim-box x axis. REQUIRED (same for y, z)."
+        },
+        "y": {
+          "$ref": "#/$defs/miller"
+        },
+        "z": {
+          "$ref": "#/$defs/miller"
+        },
+        "axes": {
+          "$ref": "#/$defs/armaxes",
+          "description": "Per-grain arm-mode override of grains.tripod.axes."
+        }
+      },
+      "required": [
+        "origin",
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    "armaxes": {
+      "anyOf": [
+        {
+          "const": "box"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/miller"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        }
+      ]
     },
     "corner": {
       "type": "string",

@@ -74,8 +74,10 @@ def main(argv=None):
 
     if args.cmd == "validate":
         from .card import SchemaUnavailableError, load_card
+        from .grains import resolve_grains
         try:
-            load_card(args.card)
+            card = load_card(args.card)
+            resolve_grains(card)  # semantic checks the schema cannot express
         except SchemaUnavailableError as exc:
             print(f"[ovzm] {exc}", file=sys.stderr)
             return 1

@@ -34,11 +34,13 @@ from ovito.vis import TextLabelOverlay
 
 from .card import load_card
 from .crystal import resolve_orientation
+from .grains import finalize_grains, grains_prov, resolve_grains
 from .labels import dxa_summary
 from .pipelinebuild import (apply_color_mode, build_pipeline,
                             check_species_names, resolve_auto_color_ranges,
                             style_atoms, style_structure_types)
-from .scene import add_overlays, make_renderer, make_viewport, resolve_output
+from .scene import (add_grain_tripods, add_overlays, make_renderer,
+                    make_viewport, resolve_output)
 
 
 def _panel_stem(path: str) -> str:
@@ -78,6 +80,7 @@ def run_grid(card_path: str, out_override: str | None = None, *,
     resolve_meta(card, ask=ask,
                  search_dirs=(card.get("_card_dir"), str(Path(inputs[0]).parent)))
     grid_cfg = card.get("grid") or {}
+    grains = resolve_grains(card)          # hard error on a malformed block
     labels = grid_cfg.get("labels") or [_panel_stem(f) for f in inputs]
     if len(labels) != len(inputs):
         raise SystemExit("[ovzm] grid.labels must match grid.inputs in length")
@@ -103,7 +106,7 @@ def run_grid(card_path: str, out_override: str | None = None, *,
                 if isinstance(mod, ColorCodingModifier) and shared_ranges:
                     mod.start_value = shared_ranges[0]["start"]
                     mod.end_value = shared_ranges[0]["end"]
-        style_structure_types(pipe, data)
+        style_structure_types(pipe, data, card)
         full_data = pipe.source.compute()
         dxa = dxa_summary(data, orientation)
         if getattr(data, "dislocations", None) is not None:
@@ -116,6 +119,9 @@ def run_grid(card_path: str, out_override: str | None = None, *,
         panels.append(dict(input=inp, pipe=pipe, data=data,
                            full_data=full_data, dxa=dxa,
                            orientation=orientation, label=str(labels[i])))
+
+    if grains is not None:  # default size / origin check against panel 1's box
+        finalize_grains(grains, panels[0]["data"].cell)
 
     # shared camera: fit each panel, keep the widest field of view
     vp = make_viewport(card, panels[0]["orientation"])
@@ -142,6 +148,10 @@ def run_grid(card_path: str, out_override: str | None = None, *,
         if i == 0 or tripod_all:
             add_overlays(vp, card, p["pipe"], p["data"], p["orientation"],
                          label_text=None)   # tripod + legend, no text block
+        if grains is not None:
+            # grain tripods are data annotation, not legend: EVERY panel.
+            # (grid.tripod first|all governs only the corner tripod.)
+            add_grain_tripods(vp, grains)
         title = TextLabelOverlay(text=p["label"])
         title.font_size = 0.035
         from .scene import _qt_alignment
@@ -185,10 +195,12 @@ def run_grid(card_path: str, out_override: str | None = None, *,
         sc["panel_label"] = p["label"]
         sc["input"] = p["input"]
         scenes.append(sc)
-    prov = _provenance(card, inputs, out_path,
-                       {"grid": {"cols": cols, "rows": rows,
-                                 "panel_size": [w, h]},
-                        "panels": scenes})
+    scene_block = {"grid": {"cols": cols, "rows": rows,
+                            "panel_size": [w, h]},
+                   "panels": scenes}
+    if grains is not None:
+        scene_block["grains"] = grains_prov(grains)
+    prov = _provenance(card, inputs, out_path, scene_block)
     _embed_prov_png(out_path)
     print(f"[ovzm] wrote {out_path}  ({n} panels, {cols}x{rows})")
     print(f"[ovzm] provenance: {prov} (also embedded in the PNG)")

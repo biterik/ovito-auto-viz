@@ -79,6 +79,11 @@ lines += [
     "- `miller` — a 3-vector of numbers, interpreted as a cubic Miller",
     "  direction (crystal frame) or a sim-frame vector depending on context.",
     "- `corner` — `top_left`, `top_right`, `bottom_left`, `bottom_right`.",
+    "- `grain` — one per-grain tripod entry: required `origin` (Å, sim frame)",
+    "  and `x`/`y`/`z` (Miller triplets of the sim-box axes in the grain's",
+    "  crystal frame), optional `name` and per-grain `axes` override.",
+    "- `armaxes` — `box` (arms along the sim-box axes) or a list of exactly",
+    "  3 Miller triplets drawn in the grain's own crystal frame.",
     "",
 ]
 out = ROOT / "docs" / "SCHEMA.md"

@@ -97,7 +97,9 @@ class Orientation:
                       z / np.linalg.norm(z)])
         if not np.allclose(M @ M.T, np.eye(3), atol=1e-3):
             raise ValueError("crystal axes are not mutually orthogonal: "
-                             f"x={list(x)}, y={list(y)}, z={list(z)}")
+                             f"x={[float(v) for v in x]}, "
+                             f"y={[float(v) for v in y]}, "
+                             f"z={[float(v) for v in z]}")
         if np.linalg.det(M) < 0:
             raise ValueError("crystal axes form a left-handed frame")
         self.M = M            # rows: crystal directions of sim x,y,z (unit)

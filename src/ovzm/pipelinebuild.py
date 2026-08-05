@@ -184,13 +184,48 @@ def _remove_color_property(frame, data):
 
 
 def apply_color_mode(pipe, card: dict):
-    """atoms.color_by: 'structure' (PTM/CNA colors, default) or 'type'."""
+    """atoms.color_by: 'structure' (PTM/CNA colors, default) or 'type'.
+
+    Mixed coloring: in 'structure' mode, any type listed in atoms.colors is
+    PINNED to its per-type color (overriding the structure color written by
+    PTM/CNA). This expresses figures like 'matrix colored by structure,
+    solutes colored by species' in a single pipeline."""
     atoms = card.get("atoms", {}) or {}
     mode = atoms.get("color_by")
     if mode is None:
         mode = "type" if atoms.get("colors") else "structure"
     if mode == "type":
         pipe.modifiers.append(_remove_color_property)
+    elif atoms.get("colors"):
+        pinned = _resolve_pinned_type_colors(pipe, atoms)
+        if pinned:
+            def _pin_type_colors(frame, data, _pinned=pinned):
+                if "Color" not in data.particles:
+                    return
+                import numpy as np
+                ptype = data.particles["Particle Type"]
+                colors = data.particles_["Color_"]
+                for tid, rgb in _pinned.items():
+                    colors[np.asarray(ptype) == tid] = rgb
+            pipe.modifiers.append(_pin_type_colors)
+
+
+def _resolve_pinned_type_colors(pipe, atoms: dict):
+    """Map atoms.colors keys (type id or species name) -> {int id: rgb}."""
+    src = pipe.source.data
+    if src is None or src.particles is None:
+        return {}
+    tprop = src.particles.particle_types
+    if tprop is None:
+        return {}
+    names = atoms.get("names") or {}
+    pinned = {}
+    for t in tprop.types:
+        tname = names.get(t.id) or names.get(str(t.id)) or t.name
+        for key, c in (atoms.get("colors") or {}).items():
+            if str(key) == str(t.id) or (tname and key == tname):
+                pinned[int(t.id)] = tuple(float(x) for x in c)
+    return pinned
 
 
 GRAY = (0.45, 0.45, 0.45)
@@ -223,22 +258,54 @@ def check_species_names(pipe, card: dict):
                 ", ".join(f"{i}: <element>" for i in missing)))
 
 
-def style_structure_types(pipe, data):
-    """Make the 'Other' structure type visible on white backgrounds."""
+#: card key -> OVITO structure-type NAME fragments (PTM, CNA, and DXA share
+#: these; observed on ovito 3.15.5 — the icosahedral type is named 'ICO')
+_STRUCTURE_KEYS = {
+    "other": "Other",
+    "fcc": "FCC",
+    "hcp": "HCP",
+    "bcc": "BCC",
+    "ico": "ICO",
+    "cubic_diamond": "Cubic diamond",
+    "hexagonal_diamond": "Hexagonal diamond",
+}
+
+
+def style_structure_types(pipe, data, card: dict = None):
+    """Apply atoms.structure_colors (card key -> RGB) to the PTM/CNA structure
+    types; with no card mapping, just make 'Other' visible on white."""
     parts = getattr(data, "particles", None)
     if parts is None or "Structure Type" not in parts:
         return
-    src = pipe.source.data
+    wanted = {}
+    if card is not None:
+        raw = (card.get("atoms", {}) or {}).get("structure_colors") or {}
+        for key, rgb in raw.items():
+            frag = _STRUCTURE_KEYS.get(str(key).lower())
+            if frag is None:
+                raise SystemExit(
+                    f"[ovzm] unknown structure_colors key '{key}'; "
+                    f"use one of {sorted(_STRUCTURE_KEYS)}")
+            wanted[frag] = tuple(float(x) for x in rgb)
     # structure types live on the modifier output, not the source; recolor at
     # render time is handled by OVITO reusing the modifier's type colors, so
-    # adjust them on the PTM/CNA modifier itself.
+    # adjust them on the PTM/CNA modifier itself. DXA carries its OWN
+    # structures list and runs after PTM in dxa-standard — the last modifier
+    # wins, so it must be recolored too or the card colors never show.
     from ovito.modifiers import (CommonNeighborAnalysisModifier,
+                                 DislocationAnalysisModifier,
                                  PolyhedralTemplateMatchingModifier)
     for mod in pipe.modifiers:
         if isinstance(mod, (PolyhedralTemplateMatchingModifier,
-                            CommonNeighborAnalysisModifier)):
+                            CommonNeighborAnalysisModifier,
+                            DislocationAnalysisModifier)):
             for st in mod.structures:
-                if st.id == 0:  # OTHER
+                matched = False
+                for frag, rgb in wanted.items():
+                    if st.name.startswith(frag):
+                        st.color = rgb
+                        matched = True
+                if not matched and st.id == 0 and not wanted:  # OTHER, default
                     st.color = GRAY
 
 

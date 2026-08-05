@@ -24,11 +24,13 @@ import ovito
 
 from .card import load_card
 from .crystal import resolve_orientation
+from .grains import finalize_grains, grains_prov, resolve_grains
 from .labels import build_label_text, dxa_summary
 from .pipelinebuild import (apply_color_mode, build_pipeline,
                             check_species_names, resolve_auto_color_ranges,
                             style_atoms, style_structure_types)
-from .scene import add_overlays, make_renderer, make_viewport, resolve_output
+from .scene import (add_grain_tripods, add_overlays, make_renderer,
+                    make_viewport, resolve_output)
 
 
 def _resolve_input(card: dict) -> str:
@@ -74,7 +76,8 @@ def _auto_outname(card: dict, input_path: str, suffix: str) -> Path:
     return Path.cwd() / f"{_figure_id(card, input_path)}{suffix}"
 
 
-def _resolved_scene(pipe, vp, card, colorbars, dxa, full_data, orientation):
+def _resolved_scene(pipe, vp, card, colorbars, dxa, full_data, orientation,
+                    grains=None):
     """The fully RESOLVED scene for the .prov.yaml — everything needed to
     interpret the image without the image carrying it: species mapping with
     actual colors/radii, colorbar limits+units, camera, analysis results."""
@@ -106,6 +109,8 @@ def _resolved_scene(pipe, vp, card, colorbars, dxa, full_data, orientation):
     if orientation is not None:
         lx, ly, lz = orientation.axis_labels()
         scene["crystal_axes"] = {"x": lx, "y": ly, "z": lz}
+    if grains is not None:
+        scene["grains"] = grains_prov(grains)
     from .labels import composition_summary
     comp = composition_summary(full_data) if full_data is not None else {}
     if comp:
@@ -319,6 +324,7 @@ def _prepare(card_path: str, *, ask: bool = False):
     resolve_meta(card, ask=ask,
                  search_dirs=(card.get("_card_dir"), str(Path(first).parent)))
     orientation = resolve_orientation(card, first)
+    grains = resolve_grains(card)          # hard error on a malformed block
     pipe = build_pipeline(card, input_path)
     if ask:
         _ask_species(pipe, card)
@@ -329,8 +335,10 @@ def _prepare(card_path: str, *, ask: bool = False):
     colorbars = resolve_auto_color_ranges(pipe, data)  # range:auto -> real limits
     if colorbars:
         data = pipe.compute()              # re-evaluate with resolved ranges
-    style_structure_types(pipe, data)      # visible 'Other' color on white bg
+    style_structure_types(pipe, data, card)  # structure colors (card or default)
     full_data = pipe.source.compute()      # unfiltered frame, for composition
+    if grains is not None:
+        finalize_grains(grains, data.cell)  # default size, origin-in-box check
     dxa = dxa_summary(data, orientation)
     if getattr(data, "dislocations", None) is not None:
         try:
@@ -350,8 +358,24 @@ def _prepare(card_path: str, *, ask: bool = False):
     zoom = (card.get("view") or {}).get("zoom", "fit")
     if isinstance(zoom, (int, float)):
         vp.fov = vp.fov / float(zoom)
+    center = (card.get("view") or {}).get("center")
+    if center is not None:
+        # re-aim the camera at a world-space point (Å, sim frame), keeping
+        # the zoom_all viewing distance so zoom stays meaningful
+        import numpy as _np
+        cd = _np.asarray(vp.camera_dir, float)
+        cd = cd / _np.linalg.norm(cd)
+        dist = _np.linalg.norm(_np.asarray(vp.camera_pos, float)
+                               - _np.asarray(data.cell[:, 3], float)
+                               - 0.5 * (_np.asarray(data.cell[:, 0], float)
+                                        + _np.asarray(data.cell[:, 1], float)
+                                        + _np.asarray(data.cell[:, 2], float)))
+        vp.camera_pos = tuple(_np.asarray(center, float) - cd * dist)
     add_overlays(vp, card, pipe, data, orientation, label_text)
-    scene = _resolved_scene(pipe, vp, card, colorbars, dxa, full_data, orientation)
+    if grains is not None:
+        add_grain_tripods(vp, grains)
+    scene = _resolved_scene(pipe, vp, card, colorbars, dxa, full_data,
+                            orientation, grains)
     return card, input_path, pipe, data, vp, dxa, scene
 
 
@@ -402,8 +426,10 @@ def run_session(card_path: str, out_override: str | None = None, *,
     except Exception as exc:  # session still usable without camera transfer
         print(f"[ovzm] note: could not transfer camera to session viewport: {exc}",
               file=sys.stderr)
-    print("[ovzm] note: overlays (tripod/labels/colorbar) are not embedded in "
-          "sessions; use 'ovzm render' for the annotated image", file=sys.stderr)
+    print("[ovzm] note: overlays (tripod/labels/colorbar"
+          + ("/grain tripods" if scene.get("grains") else "")
+          + ") are not embedded in sessions; use 'ovzm render' for the "
+          "annotated image", file=sys.stderr)
     ovito.scene.save(str(out_path))
     prov = _provenance(card, input_path, out_path, scene)
     print(f"[ovzm] wrote session {out_path} — open it in the OVITO GUI")

@@ -174,6 +174,41 @@ failure mode this tool exists to kill. Tripod and legend are drawn once
 its title, and the per-panel analysis results (composition, DXA, …) live in
 the grid's provenance under `panels:`.
 
+### Per-grain tripods (bicrystals, polycrystals)
+
+A `grains:` block draws one labeled coordinate tripod per grain — anchored at
+a user-provided origin, oriented by user-provided Miller triplets (`x`/`y`/`z`
+are the crystal directions of *this grain* lying along the sim-box axes, same
+semantics as the `crystal:` block). Origins and orientations are **never
+guessed**; give them inline or via an external grains file (`file:` XOR
+`items:`):
+
+```yaml
+grains:
+  file: grains-d005.yaml       # EITHER external file (path relative to the card)
+  items:                       # OR inline — exactly one of the two
+    - name: upper              # optional; defaults g1, g2, ...
+      origin: [12.0, 40.0, 88.5]   # Å, cartesian, simulation frame
+      x: [-1, 0, 1]
+      y: [1, -2, 1]
+      z: [1, 1, 1]
+  tripod:                      # styling, all optional
+    size: 20                   # arm length in Å (default: 5% of the largest box edge, min 10 Å)
+    axes: box                  # 'box' (arms along the box axes, labeled with each
+                               # grain's x/y/z) or 3 Miller triplets drawn in each
+                               # grain's own frame, e.g. [[1,0,0],[0,1,0],[0,0,1]]
+    show_names: true
+```
+
+The external grains file is a YAML mapping with the same `grains:` list —
+write it by hand, from a Voronoi construction, or from a segmentation tool
+(float triplets are accepted). Arms are drawn on top of the atoms with
+world-anchored length, so tripods stay visible inside dense grains and come
+out identical on every `ovzm grid` panel. The resolved grains (plus the
+grains-file SHA-256) land in the provenance like everything else.
+`tests/make_bicrystal.py` generates a Σ5 [001] bicrystal + grains file to
+try it on.
+
 ## Required minimum information
 
 `ovzm` refuses to guess what cannot be auto-detected. The contract:
@@ -236,6 +271,13 @@ cell. **Whenever atoms carry color information there is a legend**: a
 continuous colorbar for `color_coding` (limits resolved from the shown data
 when `range: auto`, units from `annotate.colorbar.units`), or a discrete
 per-type legend when coloring by species.
+
+Structure colors are configurable: `atoms.structure_colors: {fcc: [0.75,
+0.85, 1.0], other: [0.6, 0.6, 0.6]}` recolors the PTM/CNA/DXA structure
+types, and in structure mode any type listed in `atoms.colors` is *pinned*
+to its per-type color — e.g. matrix colored by structure, solutes by
+species, in one figure. `view.center: [x, y, z]` (Å, sim frame) combined
+with `view.zoom` gives reproducible close-ups of a feature.
 
 ## Presets
 
@@ -308,7 +350,8 @@ you can version it with the project.
   `ovzm render` for annotated output.
 - Keep the OVITO GUI and the `ovito` module on matching versions when
   exchanging session files.
-- Roadmap: comparison-grid shared colorbar for multi-property panels; per-grain tripods for polycrystals (orientations from a grains
-  file or grain segmentation, drawn via a custom viewport overlay); movie
-  polish (frame ranges); `.zst` input; CI smoke-renders of the presets on a
-  generated example structure; broader `ovzm import` modifier coverage.
+- Roadmap: comparison-grid shared colorbar for multi-property panels;
+  per-grain tripod follow-ups (DXA segment b/ξ re-expressed in each grain's
+  local frame; orientations imported from grain segmentation / Voronoi tool
+  output); movie polish (frame ranges); `.zst` input; broader `ovzm import`
+  modifier coverage.

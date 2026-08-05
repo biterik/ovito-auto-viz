@@ -6,6 +6,59 @@ design decisions and their reasons, hard-won gotchas, and the agreed roadmap.
 v0.3.1. Erik = Erik Bitzek, sole author; sessions run via Claude Cowork with
 the repo at ~/DEVEL/ovito-auto-viz on the Mac "M5".)
 
+## Start here — handoff, end of session 2026-08-05
+
+**Repo state:** `main` = `928f705` "0.3.2: ship presets and schema as package
+data…", committed AND pushed; `origin/main` matches. Working tree clean apart
+from whatever this file's latest edit adds.
+
+**`CLAUDE.md` is now TRACKED and public on GitHub.** It was untracked until
+that commit. It names the `~/Desktop/SIMULATIONS/...` paths and the full
+roadmap. If publishing it was not intended:
+`git rm --cached CLAUDE.md && echo CLAUDE.md >> .gitignore` (and remember the
+content stays in the pushed history).
+
+**Do this first: check CI.** `.github/workflows/ci.yml` is brand new and ran
+for the first time on `928f705`. Nobody has seen the result —
+https://github.com/biterik/ovito-auto-viz/actions. It was rehearsed
+step-by-step locally (all green), but never on a GitHub runner. Most likely
+snags, in order: the `render` job installs `ovito` from PyPI (large download;
+the GL apt packages are already in the job); the py3.9 leg of the `packaging`
+matrix (checked statically for 3.10-only syntax — clean — but not executed on
+3.9); `actions/upload-artifact@v4` pinning. Note Claude cannot reach
+api.github.com from the Cowork sandbox, so it cannot check runs for you —
+paste the failing log in and it can fix from that.
+
+**Environment reality (verified 2026-08-05), the thing that confused this
+session:** see "Three separate Pythons" under Session workflow below. Short
+version: Claude renders in the disposable Cowork cloud sandbox; the device
+bridge is an aarch64 Linux VM with NO network that cannot run `ovzm`; Erik's
+Mac conda env is his alone and Claude cannot execute there.
+
+**Git from the bridge leaves a stale `.git/index.lock`.** Any `git` command
+Claude runs via `device_bash` creates it and cannot remove it (unlink is
+refused on the mount). It is zero bytes and harmless but blocks the next
+local git command. Fix on the Mac:
+`rm -f /Users/e.bitzek/DEVEL/ovito-auto-viz/.git/index.lock`.
+Prefer read-only git via the bridge, and hand Erik copy-paste blocks.
+
+**Skill:** `skills/ovito-auto-viz/SKILL.md` is installed in Erik's Cowork
+account (delivered as a `.skill` file, updated for 0.3.2). Re-deliver a
+repackaged `.skill` whenever that file changes — the account copy does NOT
+track the repo.
+
+**Next actions, in order:**
+1. Confirm CI is green; fix whatever it turns up.
+2. **PyPI** — now genuinely unblocked. Check the name `ovito-auto-viz` is
+   free, set up trusted publishing from a GitHub Action, release 0.3.2.
+   Never publish <0.3.2: those wheels are broken (see Status).
+3. **Dislocation-dipole generator + physics tests** (roadmap 2, still open) —
+   `tests/make_fcc.py` only makes a perfect crystal.
+4. **README figure** — still blocked on Erik: his D90 data, or generated?
+   Note `~/Desktop/SIMULATIONS/` is NOT a connected Cowork folder, so Claude
+   currently cannot see the D90 dumps at all; Erik must "Add folder" first.
+5. Legend defect (see below) — Erik's call.
+
 ## What this is
 
 A standalone CLI tool (`ovzm`) + YAML "viz card" format for reproducible
@@ -16,10 +69,40 @@ view; this file is the developer/agent view.
 
 ## Status (2026-08-05)
 
-- **v0.3.2 in the working tree** (0.3.1 released), public at
+- **v0.4.0 in the working tree** (0.3.1 released), public at
   https://github.com/biterik/ovito-auto-viz (branch `main`), DOI
   **10.5281/zenodo.21796154** (concept DOI, Zenodo auto-archives releases).
   PyPI: NOT yet published.
+- **0.4.0 adds per-grain tripods (2026-08-05, roadmap-6 backlog item →
+  done).** New `grains:` card block (`file` XOR `items`; per-grain REQUIRED
+  origin + x/y/z with `crystal:` semantics; `tripod: {size, axes, show_names}`;
+  arm modes `box` | 3 Miller triplets), drawn via a legacy-API
+  `PythonViewportOverlay` in `scene.py:add_grain_tripods` (arms + arrowheads +
+  halo labels ON TOP of atoms, world-anchored Å length). Logic lives in
+  `src/ovzm/grains.py`, which deliberately imports no ovito so `ovzm validate`
+  and the unit tests run in the packaging CI job (that job now installs numpy).
+  Grid draws them on EVERY panel (verified pixel-identical); sessions skip
+  them (overlay-corruption gotcha) with an extended warning; prov gains a
+  resolved `grains:` block incl. grains-file sha256. Fixture:
+  `tests/make_bicrystal.py`, an exact Σ5 [001] twist bicrystal (nxy must stay
+  a multiple of 5 — that makes BOTH grains commensurate with the periodic box,
+  so PTM classifies the interiors cleanly fcc; nxy=14 looked "broken" for
+  exactly this reason). The stale `tripods:` schema placeholder was replaced
+  by the real `grains:` schema.
+- **0.4.0 also merges Erik's `0.4.0-structure-colors-and-view.patch`**
+  (applied by hand 2026-08-05 — it no longer applied after the tripod work):
+  `atoms.structure_colors` (card key → RGB for PTM/CNA/DXA structure types),
+  pinned per-type colors in structure mode (`atoms.colors` entries override
+  the structure color — "matrix by structure, solutes by species"),
+  `view.center` (re-aim camera at a world point, keeps zoom_all distance),
+  honoring `view.direction_sim_frame` + the resolved up vector. Two fixes
+  beyond the patch, found by rendering: (1) **DXA carries its own
+  `structures` list and runs after PTM in dxa-standard, so it must be
+  recolored too** — this is also why the old Other→GRAY tweak never showed
+  in DXA renders (GB atoms rendered 0.95-white); (2) the icosahedral type is
+  named 'ICO' on 3.15.5, not 'Icosahedral'. Verified by render: fcc/other
+  recolor + orange pinned solutes + GB-centered zoom all correct. The patch
+  file itself can be deleted once committed.
 - **0.3.2 fixes the packaging bug that would have broken the PyPI release.**
   `presets/` and `schema/` sat at the repo root and were not declared as
   package data, so a non-editable install shipped neither: `extends:` raised
@@ -155,10 +238,14 @@ overwriting — he edits between sessions.
    provenance graph itself. Natural NFDI-MatWerk deliverable; possibly its
    own paper. Design sketch: `prov.yaml` gains an optional `@context` /
    `semantics:` block mapping keys → IRIs; `ovzm prov --jsonld` exports RDF.
-6. Backlog: per-grain tripods for polycrystals (PythonViewportOverlay,
-   orientations from grains file or grain segmentation — designed, not
-   built), movie polish (frame ranges), `.zst` input, broader `ovzm import`
+6. Backlog: movie polish (frame ranges), `.zst` input, broader `ovzm import`
    modifier coverage, pair_coeff-sniffing to *suggest* species names.
+   Per-grain tripods: DONE 2026-08-05 (v0.4.0, see Status; spec was
+   `docs/TASK-per-grain-tripods.md`). Follow-ups deliberately NOT in v1:
+   re-expressing DXA segment b/ξ in each grain's local frame; running
+   GrainSegmentationModifier to find grains automatically; converters from
+   segmentation / Voronoi-tool output (incl. quaternion input); per-grain
+   atom coloring / GB extraction / example polycrystal datasets.
 
 ## Known cosmetic defect (found 2026-08-05, not fixed)
 

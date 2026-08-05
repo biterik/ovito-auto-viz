@@ -19,6 +19,7 @@ from ovito.vis import (
     ColorLegendOverlay,
     CoordinateTripodOverlay,
     OpenGLRenderer,
+    PythonViewportOverlay,
     TachyonRenderer,
     TextLabelOverlay,
     Viewport,
@@ -74,8 +75,20 @@ def make_renderer(name: str):
 
 def resolve_view(card: dict, orientation: Orientation | None):
     view = card.get("view", {}) or {}
-    direction = view.get("direction", "front")
     up = view.get("up")
+    raw = view.get("direction_sim_frame")
+    if raw is not None and "direction" not in view:
+        # raw sim-frame camera direction (e.g. recovered by `ovzm import`)
+        cam_dir = np.asarray(raw, dtype=float)
+        cam_dir = cam_dir / np.linalg.norm(cam_dir)
+        if up is not None and not isinstance(up, str):
+            up_vec = np.asarray(up, dtype=float)
+        else:
+            up_vec = np.asarray((0, 0, 1), dtype=float)
+            if abs(np.dot(up_vec, cam_dir)) > 0.95:
+                up_vec = np.asarray((0, 1, 0), dtype=float)
+        return cam_dir, up_vec, view.get("projection", "ortho")
+    direction = view.get("direction", "front")
     if isinstance(direction, str):
         if direction not in NAMED_VIEWS:
             raise ValueError(f"unknown named view '{direction}'; "
@@ -108,8 +121,16 @@ def make_viewport(card: dict, orientation: Orientation | None) -> Viewport:
     vp.type = (Viewport.Type.Ortho if projection == "ortho"
                else Viewport.Type.Perspective)
     vp.camera_dir = tuple(cam_dir)
-    # camera_up is set implicitly by OVITO from camera_dir; for exact up-vector
-    # control we rely on the default heuristic unless it degenerates.
+    # honor the resolved up vector unless it is (near-)parallel to the view
+    # direction, in which case OVITO's own heuristic is safer.
+    cd = np.asarray(cam_dir, float)
+    uv = np.asarray(up_vec, float)
+    if np.linalg.norm(uv) > 0 and abs(np.dot(uv / np.linalg.norm(uv),
+                                             cd / np.linalg.norm(cd))) < 0.99:
+        try:
+            vp.camera_up = tuple(uv)
+        except Exception:
+            pass
     return vp
 
 
@@ -192,6 +213,97 @@ def add_overlays(vp: Viewport, card: dict, pipe, data, orientation, label_text):
             lab.offset_x = 0.01 if corner.endswith("left") else -0.01
             lab.offset_y = (-(0.012 + i * step)) if top else (0.012 + (len(lines) - 1 - i) * step)
             vp.overlays.append(lab)
+
+
+def add_grain_tripods(vp: Viewport, grains):
+    """Per-grain coordinate tripods, drawn as a PythonViewportOverlay.
+
+    Origin and arm tips (origin + size * direction, both in Å / sim frame)
+    are projected into viewport coordinates and the arms drawn as 2D lines
+    with arrowheads — deliberately ON TOP of the atoms, so a tripod inside
+    a dense grain stays visible. Arm length is world-anchored: apparent size
+    scales with zoom and is identical across grid panels sharing a camera.
+    Overlay-space by design: zoom-to-fit (view.fit_margin) must not react
+    to the tripods.
+    """
+    if not grains or not grains.get("grains"):
+        return
+    # same x/y/z color convention as the corner tripod (its axis defaults)
+    ref = CoordinateTripodOverlay()
+    axis_colors = [tuple(float(c) for c in col) for col in
+                   (ref.axis1_color, ref.axis2_color, ref.axis3_color)]
+    size = float(grains["tripod"]["size"])
+    show_names = grains["tripod"]["show_names"]
+    items = grains["grains"]
+
+    def _render(args):
+        from ovito.qt_compat import QtCore, QtGui
+        painter = args.painter
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
+        h = args.size[1]
+        font_px = max(10, int(0.018 * h))
+        line_w = max(1.5, 0.0018 * h)
+        font = painter.font()
+        font.setPixelSize(font_px)
+        font.setBold(True)
+        painter.setFont(font)
+        for g in items:
+            origin = np.asarray(g["origin"], dtype=float)
+            proj = [args.project_point(tuple(origin))]
+            for arm in g["arms"]:
+                tip = origin + size * np.asarray(arm["direction_sim"])
+                proj.append(args.project_point(tuple(tip)))
+            if any(p is None for p in proj):
+                import sys
+                print(f"[ovzm] warning: grain '{g['name']}' tripod is behind "
+                      "the camera; skipping it", file=sys.stderr)
+                continue
+            o2 = np.asarray(proj[0], dtype=float)
+            for (arm, tip2, color) in zip(g["arms"], proj[1:], axis_colors):
+                t2 = np.asarray(tip2, dtype=float)
+                qcolor = QtGui.QColor.fromRgbF(*color)
+                pen = QtGui.QPen(qcolor)
+                pen.setWidthF(line_w)
+                pen.setCapStyle(QtCore.Qt.PenCapStyle.RoundCap)
+                painter.setPen(pen)
+                painter.drawLine(QtCore.QPointF(*o2), QtCore.QPointF(*t2))
+                d = t2 - o2
+                n = float(np.hypot(*d))
+                if n > 1e-6:
+                    u = d / n
+                    head = min(0.22 * n, 3.0 * line_w + 6.0)
+                    for ang in (2.65, -2.65):  # ~152 deg off the arm direction
+                        c, s = np.cos(ang), np.sin(ang)
+                        w = np.array([u[0] * c - u[1] * s, u[0] * s + u[1] * c])
+                        painter.drawLine(QtCore.QPointF(*t2),
+                                         QtCore.QPointF(*(t2 + head * w)))
+                    label_pos = t2 + (0.6 * font_px) * u
+                else:
+                    label_pos = t2
+                _halo_text(painter, QtGui, label_pos, arm["label"], qcolor,
+                           font_px)
+            if show_names:
+                # fixed offset below-left of the origin, clear of the arm labels
+                name_pos = o2 + np.array([-1.0 * font_px, 1.6 * font_px])
+                _halo_text(painter, QtGui, name_pos,
+                           g["name"], QtGui.QColor.fromRgbF(0, 0, 0), font_px)
+
+    vp.overlays.append(PythonViewportOverlay(function=_render))
+
+
+def _halo_text(painter, QtGui, pos, text, color, font_px):
+    """Text with a thin contrasting halo so labels survive busy backgrounds."""
+    x, y = float(pos[0]), float(pos[1] + 0.35 * font_px)  # roughly center on pos
+    halo = QtGui.QColor.fromRgbF(1, 1, 1)
+    pen = painter.pen()
+    painter.setPen(halo)
+    for dx in (-1, 0, 1):
+        for dy in (-1, 0, 1):
+            if dx or dy:
+                painter.drawText(int(x + dx), int(y + dy), text)
+    painter.setPen(color)
+    painter.drawText(int(x), int(y), text)
+    painter.setPen(pen)
 
 
 def _qt_alignment(corner: str):

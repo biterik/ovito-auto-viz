@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ovito-auto-viz"
-version = "0.3.2"
+version = "0.4.0"
 description = "Declarative, reproducible OVITO visualization of LAMMPS files: YAML viz-cards -> images, movies, or ready-to-open OVITO sessions."
 readme = "README.md"
 license = { text = "BSD-3-Clause" }

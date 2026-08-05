@@ -37,6 +37,11 @@ These must come from the user if not auto-detectable; ask for them explicitly
   filename. Without it, b/ξ labels are only available in DXA's lattice frame.
 - **View and what to show**, if the user's request doesn't imply them
   ("glide-plane view", "along the line", "everything").
+- **Grain origins and orientations** for per-grain tripods (`grains:` block,
+  bicrystals/polycrystals). ASK for the origins (Å, sim frame) and the per-grain
+  x/y/z Miller triplets, or for a grains file (same YAML shape, e.g. from a
+  Voronoi construction or a segmentation tool) — never place or orient a grain
+  tripod yourself, and never run grain segmentation to derive them.
 - **Figure creator** (meta.creator) if neither an ovzm-project.yaml (project root) nor a personal identity file supplies it — mandatory, never invent it. Suggest creating an ovzm-project.yaml in the project root so it is answered once per project.
 - **Units** for any color-coded property (the limits are auto-resolved, the
   units are physics the data doesn't carry).
