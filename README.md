@@ -75,14 +75,15 @@ conda activate <your-env>                        # or: source <your-venv>/bin/ac
 pip install -e /absolute/path/to/ovito-auto-viz  # editable install from a clone
 ```
 
-Without cloning, straight from GitHub:
+This pulls in the [`ovito`](https://pypi.org/project/ovito/) module and puts
+the `ovzm` CLI on your `PATH` inside that environment.
 
-```bash
-pip install git+https://github.com/biterik/ovito-auto-viz.git
-```
-
-Either route pulls in the [`ovito`](https://pypi.org/project/ovito/) module
-and puts the `ovzm` CLI on your `PATH` inside that environment.
+> **Install from a clone, editable (`-e`).** `presets/` and
+> `schema/vizcard.schema.json` live at the repo root and are not yet shipped
+> as package data, so a non-editable install
+> (`pip install git+https://github.com/biterik/ovito-auto-viz.git`) yields a
+> CLI that cannot resolve `extends:` presets and whose `ovzm schema` prints
+> `null`. This is fixed before the PyPI release.
 
 Headless Linux (cluster, CI) additionally needs the GL runtime the module
 links against:

@@ -10,11 +10,19 @@ description: >
 
 # ovito-auto-viz — driving OVITO through viz cards
 
-The tool lives in the `ovito-auto-viz` repo (CLI: `ovzm`, installed via
-`pip install -e <repo>`). You write a small YAML **viz card** describing the
-figure and run `ovzm render card.yaml`. Do not write ad-hoc ovito Python
-scripts for tasks a card can express — the card IS the deliverable the user
-can rerun, tweak, and version.
+The tool is the `ovzm` CLI from the `ovito-auto-viz` repo. You write a small
+YAML **viz card** describing the figure and run `ovzm render card.yaml`. Do
+not write ad-hoc ovito Python scripts for tasks a card can express — the card
+IS the deliverable the user can rerun, tweak, and version.
+
+## Where this runs
+
+`ovzm` needs the `ovito` Python module, so it runs wherever you have a real
+shell — typically a disposable Linux sandbox/container, not the user's own
+machine. Never install into a user's system Python or touch their existing
+environments; on their own workstation they install it themselves into a
+conda env or venv. If the data lives on the user's machine, stage it in,
+render locally, and hand back the image plus its `.prov.yaml` sidecar.
 
 ## Required information — ask, never guess
 
@@ -35,9 +43,19 @@ These must come from the user if not auto-detectable; ask for them explicitly
 
 ## Workflow
 
-1. Locate the repo (`ovzm --help` works if installed; else find
-   `ovito-auto-viz/` and `pip install -e` it). Read `presets/` for available
-   bases and `docs/SCHEMA.md` for every key.
+1. Check `ovzm --help`. If missing, clone and install **editable** — the
+   editable install is required, `presets/` and `schema/` are not yet shipped
+   as package data (~2 min):
+
+   ```bash
+   git clone https://github.com/biterik/ovito-auto-viz.git
+   pip install -e ovito-auto-viz          # add --break-system-packages in a throwaway container
+   apt-get install -y libopengl0 libegl1 libgl1 libglx0 libxkbcommon0   # ovito's GL runtime
+   ```
+
+   Confirm with `ovzm schema | head -3` — if it prints `null`, the install is
+   non-editable and `extends:` will fail. Then read `presets/` in the clone
+   for available bases and `docs/SCHEMA.md` for every key.
 2. Compose a card that `extends:` the closest preset (`dxa-standard` for
    defect/dislocation views, `segregation-map` for solute distribution) and
    overrides only what the task needs.
