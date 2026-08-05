@@ -28,13 +28,14 @@ AND its complete provenance, embedded inside the PNG itself.*
 
 ## Why
 
-Scientific figures are usually the **least FAIR objects** in a publication:
+Scientific figures take time to make and are amongst the **least FAIR objects** in a publication:
 pixels with no metadata, produced by GUI clicks nobody can repeat, separated
 from their data the moment they are exported. `ovzm` inverts this:
 
 - **The figure is a text file.** The card is versionable, diffable,
   reviewable, and re-runs identically on your laptop or a cluster. Same
-  card + same data = same figure, years later.
+  card + same data = same figure, years later. The card can even be 
+  extracted from the figure if it goes missing.
 - **The physics labels itself.** DXA dislocation segments get their Burgers
   vector, line direction, and character angle computed from the data —
   nucleated defects with zero metadata are labeled just as well as
