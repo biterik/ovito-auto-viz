@@ -65,9 +65,24 @@ ovito-auto-viz … funded by NFDI-MatWerk").
 
 ## Install
 
+`ovzm` is an ordinary Python package. Install it into the environment you
+already use for scientific Python — a conda/mamba environment or a venv —
+**not** into a system Python (many systems ship no user-writable `pip`, and
+installing one globally is a good way to break the OS package manager).
+
 ```bash
-pip install -e .          # from this repo; installs the `ovzm` CLI
+conda activate <your-env>                        # or: source <your-venv>/bin/activate
+pip install -e /absolute/path/to/ovito-auto-viz  # editable install from a clone
 ```
+
+Without cloning, straight from GitHub:
+
+```bash
+pip install git+https://github.com/biterik/ovito-auto-viz.git
+```
+
+Either route pulls in the [`ovito`](https://pypi.org/project/ovito/) module
+and puts the `ovzm` CLI on your `PATH` inside that environment.
 
 Headless Linux (cluster, CI) additionally needs the GL runtime the module
 links against:
