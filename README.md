@@ -1,30 +1,192 @@
 # ovito-auto-viz
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21796154.svg)](https://doi.org/10.5281/zenodo.21796154)
+[![CI](https://github.com/biterik/ovito-auto-viz/actions/workflows/ci.yml/badge.svg)](https://github.com/biterik/ovito-auto-viz/actions/workflows/ci.yml)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
 
-Declarative, reproducible OVITO visualization of LAMMPS files.
-You describe the figure in a small YAML **viz card** — view, atom styling,
-analysis pipeline, annotations, output quality — and the `ovzm` CLI turns it
-into a rendered image, a movie, or a ready-to-open OVITO session. Everything
-on the figure (Burgers vectors, line directions, character angles, composition,
-colorbar) is **computed from the data itself**, so nucleated defects without
-any metadata are labeled just as well as constructed ones.
+**Automated, reproducible and FAIR visualization of atomistic simulations
+with [OVITO](https://www.ovito.org) — self-labeling figures with complete
+metadata and provenance.**
 
-**Author:** Erik Bitzek ([ORCID 0000-0001-7430-3694](https://orcid.org/0000-0001-7430-3694),
-<e.bitzek@mpi-susmat.de>) — ¹ Max-Planck-Institut for Sustainable Materials,
-Düsseldorf, Germany; ² Institute of Materials Simulation (WW8),
-Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU), Fürth, Germany.
-Built with Claude/LLM assistance.
+You describe the figure in a ~20-line YAML **viz card**; the `ovzm` CLI turns
+it into a publication-quality image, movie, or ready-to-open OVITO session.
+Everything on the figure — Burgers vectors, line directions, character
+angles, composition, colorbars, per-grain tripods — is **computed from the
+data itself**. And every figure **permanently remembers** who made it, from
+which data file (SHA-256), with which settings, under which funding, and
+which publication it belongs to: the full provenance record is embedded
+inside the PNG. Works hands-on, in scripts, on HPC clusters — and
+conversationally through an LLM agent skill.
 
-**Funding:** Deutsche Forschungsgemeinschaft (DFG, German Research
-Foundation) — NFDI 38/1, project number 460247524
-(**[NFDI-MatWerk](https://nfdi-matwerk.de) consortium**).
+![W grain-boundary crack with phosphorus segregation](docs/readme-hero.png)
 
-**License:** BSD-3-Clause. **Citation:** see [`CITATION.cff`](CITATION.cff)
-(GitHub's "Cite this repository" button). The
-[`ovito`](https://pypi.org/project/ovito/) Python module is a dependency
-(free of charge, including DXA), not vendored.
+*A crack in tungsten runs in from the left, kinks onto a phosphorus-decorated
+grain boundary, and continues along it (bcc W dark gray, defective atoms
+white, P orange, one Miller-labeled tripod per grain). Configuration from
+[Tian et al., Acta Materialia 259 (2023) 119256](https://doi.org/10.1016/j.actamat.2023.119256).
+This image was rendered by `ovzm` from a small text card — and it carries its
+own receipt. Clone the repo and ask the picture where it comes from:*
+
+```bash
+ovzm prov docs/readme-hero.png     # prints creator, input file + SHA-256,
+                                   # the resolved card, and the paper's DOI
+```
+
+## Why
+
+Scientific figures are usually the **least FAIR objects** in a publication:
+pixels with no metadata, produced by GUI clicks nobody can repeat, separated
+from their data the moment they are exported. `ovzm` inverts this:
+
+- **The figure is a text file.** The card is versionable, diffable,
+  reviewable, and re-runs identically on your laptop or a cluster. Same
+  card + same data = same figure, years later.
+- **The physics labels itself.** DXA dislocation segments get their Burgers
+  vector, line direction, and character angle computed from the data —
+  nucleated defects with zero metadata are labeled just as well as
+  constructed ones. Composition, colorbar limits, and crystal-axis tripods
+  are derived, never typed.
+- **A figure never forgets.** Creator (mandatory — the run aborts without
+  it), affiliation, ORCID, project, funding, input file with SHA-256, the
+  fully resolved card and scene: all of it is written to a `.prov.yaml`
+  sidecar AND embedded into the PNG itself as a compressed text chunk.
+  Image and provenance cannot be separated by copying, renaming, emailing,
+  or archiving.
+- **Comparisons are honest.** `ovzm grid` renders one card over many inputs
+  with identical camera, magnification, styling, and colorbar limits — the
+  manual-GUI failure mode this tool exists to kill.
+- **LLM-ready by design.** The card is one shared interface for humans,
+  scripts, and AI agents. With the bundled agent skill, *"glide-plane view
+  of dump.1530000.gz, Cu segregation, paper quality"* becomes a rendered
+  figure — the agent writes the card, collects attribution context from
+  your project directory, and asks (never guesses) whatever the data cannot
+  provide. The tool itself requires no AI; the skill is an optional adapter
+  on top.
+
+## Install
+
+`ovzm` is an ordinary Python package (Python ≥ 3.9). Its main dependency,
+the [`ovito`](https://pypi.org/project/ovito/) Python module (free of
+charge, DXA included), is installed **automatically** by pip — you do NOT
+need the OVITO desktop application. Install into a conda/mamba environment
+or a venv, **never** into a system Python (many systems ship no
+user-writable `pip`, and installing one globally is a good way to break the
+OS package manager).
+
+**Linux**
+
+```bash
+python -m venv ~/venvs/ovzm && source ~/venvs/ovzm/bin/activate   # or: conda activate <env>
+pip install git+https://github.com/biterik/ovito-auto-viz.git
+```
+
+Headless machines (clusters, CI, containers) additionally need the GL
+runtime the `ovito` module links against — no GPU or display required
+(rendering uses the Tachyon software ray-tracer):
+
+```bash
+sudo apt-get install libopengl0 libegl1 libgl1 libglx0 libxkbcommon0   # Debian/Ubuntu
+# Fedora/RHEL: libglvnd-opengl libglvnd-egl libglvnd-glx libxkbcommon
+```
+
+On HPC, install into a venv under scratch (never `$HOME`) and run renders
+inside a batch job, not on a login node.
+
+**macOS** (Intel and Apple Silicon)
+
+```bash
+conda activate <your-env>          # conda-forge env recommended on macOS
+pip install git+https://github.com/biterik/ovito-auto-viz.git
+```
+
+**Windows**
+
+The `ovito` module ships Windows wheels, so the same install should work in
+an Anaconda Prompt or venv (not yet routinely tested — reports welcome):
+
+```powershell
+pip install git+https://github.com/biterik/ovito-auto-viz.git
+```
+
+If anything misbehaves natively, WSL2 + the Linux instructions above is the
+reliable fallback.
+
+**Check the install** — this must print JSON:
+
+```bash
+ovzm schema | head -3
+```
+
+For development, install editable from a clone:
+`pip install -e /absolute/path/to/ovito-auto-viz`.
+
+## Quickstart
+
+```yaml
+# my-figure.yaml
+name: d90-glideplane
+extends: dxa-standard          # preset: PTM + DXA + auto labels
+input:
+  file: dump_min_sgcmc_d90_T300.1530000.gz
+crystal:
+  x: [-1, 0, 1]                # or "auto" -> parsed from x-101_y1-21_z111 filenames
+  y: [1, -2, 1]
+  z: [1, 1, 1]
+  lattice: fcc
+view:
+  direction: top               # named view, or a Miller direction like [111]
+atoms:
+  show: non_fcc
+  names: {1: Ni, 2: Cu}
+  colors: {1: [0.62, 0.66, 0.72], 2: [0.90, 0.45, 0.10]}
+```
+
+```bash
+ovzm render  my-figure.yaml            # -> <input>__<name>.png + .prov.yaml sidecar
+ovzm grid    comparison.yaml           # same card over grid.inputs -> one labeled grid
+ovzm session my-figure.yaml            # -> .ovito file: open in the GUI, pipeline + camera preset
+ovzm import  something.ovito           # best-effort reverse: GUI session -> card YAML
+ovzm info    dump.gz                   # types, box, frames, filename-parsed orientation
+ovzm prov    figure.png                # print the provenance embedded in the image
+ovzm validate my-figure.yaml           # schema check with readable errors
+ovzm schema                            # print the JSON schema
+```
+
+## Using it with an LLM (the agent skill)
+
+`skills/ovito-auto-viz/SKILL.md` is an
+[Agent Skill](https://github.com/anthropics/skills): a plain instruction
+file (no code) that teaches a Claude session when to use `ovzm`, how to
+compose cards from the presets, and — crucially — what it must **ask**
+instead of guessing (species names, crystal orientation, figure creator,
+colorbar units). Attribution context is collected automatically from the
+project directory (`ovzm-project.yaml`, personal identity file, filename
+conventions), so a one-line request becomes a rendered, fully attributed
+figure plus the card to version with your project. The tool itself never
+requires any AI — the skill is an optional adapter on top.
+
+Install:
+
+- **Claude Code** (CLI): copy the skill folder into your skills directory —
+
+  ```bash
+  mkdir -p ~/.claude/skills
+  cp -R skills/ovito-auto-viz ~/.claude/skills/
+  ```
+
+  It then triggers automatically on requests like "render the standard DXA
+  view of this dump" in any project where `ovzm` is installed.
+
+- **Claude Desktop / Cowork**: add the skill via the app's
+  Settings → Capabilities/Skills (upload or point it at
+  `skills/ovito-auto-viz/`), or ask Claude in a session to package
+  `SKILL.md` as an installable `.skill` file for your account.
+
+Usage is then conversational: *"glide-plane view of
+`SGCMC-D90/dump.1530000.gz`, Cu segregation, paper quality"* — the session
+writes the card (asking for whatever the required-information table says it
+cannot detect), runs `ovzm render`, and shows you the PNG plus the card so
+you can version it with the project.
 
 ## Attribution of figures
 
@@ -63,81 +225,10 @@ All resolved values land in the `.prov.yaml` and inside the PNG; every YAML
 the tool writes carries the tool-credit header ("created with
 ovito-auto-viz … funded by NFDI-MatWerk").
 
-## Install
+## Reading the provenance inside a PNG
 
-`ovzm` is an ordinary Python package. Install it into the environment you
-already use for scientific Python — a conda/mamba environment or a venv —
-**not** into a system Python (many systems ship no user-writable `pip`, and
-installing one globally is a good way to break the OS package manager).
-
-```bash
-conda activate <your-env>                        # or: source <your-venv>/bin/activate
-pip install git+https://github.com/biterik/ovito-auto-viz.git
-```
-
-From a clone, for development:
-
-```bash
-pip install -e /absolute/path/to/ovito-auto-viz
-```
-
-Either route pulls in the [`ovito`](https://pypi.org/project/ovito/) module,
-puts the `ovzm` CLI on your `PATH`, and installs the presets and the card
-schema as package data. Check it landed correctly with `ovzm schema | head -3`
-— that must print JSON, and `ovzm validate` on a card with `extends:` must
-resolve the preset.
-
-Headless Linux (cluster, CI) additionally needs the GL runtime the module
-links against:
-
-```bash
-apt-get install libopengl0 libegl1 libgl1 libglx0 libxkbcommon0   # or distro equivalent
-```
-
-Rendering uses the Tachyon software ray-tracer by default — no GPU or display
-required. On HPC, install into a venv under scratch (never `$HOME`) and run
-renders inside a batch job.
-
-## Quickstart
-
-```yaml
-# my-figure.yaml
-name: d90-glideplane
-extends: dxa-standard          # preset from presets/
-input:
-  file: dump_min_sgcmc_d90_T300.1530000.gz
-crystal:
-  x: [-1, 0, 1]                # or "auto" -> parsed from x-101_y1-21_z111 filenames
-  y: [1, -2, 1]
-  z: [1, 1, 1]
-  lattice: fcc
-view:
-  direction: top               # named view, or a Miller direction like [111]
-atoms:
-  show: non_fcc
-  names: {1: Ni, 2: Cu}
-  colors: {1: [0.62, 0.66, 0.72], 2: [0.90, 0.45, 0.10]}
-```
-
-```bash
-ovzm render  my-figure.yaml            # -> <input>__<name>.png + .prov.yaml sidecar
-ovzm grid    comparison.yaml           # same card over grid.inputs -> one labeled grid
-ovzm session my-figure.yaml            # -> .ovito file: open in the GUI, pipeline + camera preset
-ovzm import  something.ovito           # best-effort reverse: GUI session -> card YAML
-ovzm info    dump.gz                   # types, box, frames, filename-parsed orientation
-ovzm prov    figure.png                # print the provenance embedded in the image
-ovzm validate my-figure.yaml           # schema check with readable errors
-ovzm schema                            # print the JSON schema
-```
-
-Every render writes a `.prov.yaml` sidecar AND embeds the same YAML into the
-PNG itself (compressed text chunk, key `ovzm_prov`) — image and provenance
-cannot be separated; `ovzm prov figure.png` recovers it from the image alone.
-
-### Reading the provenance inside a PNG
-
-The embedded record is a standard PNG text chunk, so it is accessible with or
-without this tool:
+The embedded record is a standard PNG text chunk (key `ovzm_prov`), so it
+is accessible with or without this tool:
 
 ```bash
 ovzm prov figure.png                    # with ovito-auto-viz installed
@@ -158,13 +249,14 @@ exiftool -b -Ovzm_prov figure.png       # exiftool
 identify -verbose figure.png            # ImageMagick: listed under Properties
 ```
 
-The chunk survives copying, renaming, emailing, and archiving — anything that
-treats the file as bytes. It does NOT survive operations that re-encode the
-pixels: screenshots, format conversion (PNG→JPEG), or "export/save for web"
-in image editors. For a figure that will be re-encoded (e.g. embedded in a
-PDF), keep the `.prov.yaml` sidecar alongside — it is the identical record.
+The chunk survives copying, renaming, emailing, and archiving — anything
+that treats the file as bytes. It does NOT survive operations that
+re-encode the pixels: screenshots, format conversion (PNG→JPEG), or
+"export/save for web" in image editors. For a figure that will be
+re-encoded (e.g. embedded in a PDF), keep the `.prov.yaml` sidecar
+alongside — it is the identical record.
 
-### Comparison grids
+## Comparison grids
 
 `ovzm grid` renders the SAME card over several inputs (`grid.inputs`,
 optional `grid.labels`/`grid.cols`) into one figure with **identical camera,
@@ -174,7 +266,7 @@ failure mode this tool exists to kill. Tripod and legend are drawn once
 its title, and the per-panel analysis results (composition, DXA, …) live in
 the grid's provenance under `panels:`.
 
-### Per-grain tripods (bicrystals, polycrystals)
+## Per-grain tripods (bicrystals, polycrystals)
 
 A `grains:` block draws one labeled coordinate tripod per grain — anchored at
 a user-provided origin, oriented by user-provided Miller triplets (`x`/`y`/`z`
@@ -207,7 +299,8 @@ world-anchored length, so tripods stay visible inside dense grains and come
 out identical on every `ovzm grid` panel. The resolved grains (plus the
 grains-file SHA-256) land in the provenance like everything else.
 `tests/make_bicrystal.py` generates a Σ5 [001] bicrystal + grains file to
-try it on.
+try it on. (The hero image above uses exactly this feature — one tripod per
+grain of the W bicrystal.)
 
 ## Required minimum information
 
@@ -218,6 +311,8 @@ try it on.
 | input file | — | always required in the card |
 | species names (multi-type files) | type names in the file (data files); dumps have none | **hard error** — add `atoms.names: {1: Ni, 2: Cu}` or run with `--ask` to be prompted |
 | crystal orientation | `x-101_y1-21_z111`-style filenames | b/ξ labels fall back to DXA's lattice frame, flagged in the label block |
+| grain origins/orientations (tripods) | — | **hard error** if a `grains:` block is incomplete — never guessed |
+| figure creator | ovzm-project.yaml / identity file | **hard error** — attribution is not optional |
 | lattice (for DXA) | — | preset default (`fcc` in `dxa-standard`); set `crystal.lattice` |
 | view | — | preset default (`front`); set `view.direction` |
 | what is shown | — | preset default (`non_fcc` in `dxa-standard`); set `atoms.show` |
@@ -272,14 +367,7 @@ continuous colorbar for `color_coding` (limits resolved from the shown data
 when `range: auto`, units from `annotate.colorbar.units`), or a discrete
 per-type legend when coloring by species.
 
-Structure colors are configurable: `atoms.structure_colors: {fcc: [0.75,
-0.85, 1.0], other: [0.6, 0.6, 0.6]}` recolors the PTM/CNA/DXA structure
-types, and in structure mode any type listed in `atoms.colors` is *pinned*
-to its per-type color — e.g. matrix colored by structure, solutes by
-species, in one figure. `view.center: [x, y, z]` (Å, sim frame) combined
-with `view.zoom` gives reproducible close-ups of a feature.
-
-## Presets
+## Presets and styling
 
 Cards inherit via `extends:` (chains allowed; search path: `$OVZM_PRESET_PATH`,
 then `./presets/`, then the presets bundled with the package in
@@ -289,7 +377,12 @@ then `./presets/`, then the presets bundled with the package in
 - `segregation-map` — all atoms colored by type, solute rendered larger.
 
 Output quality presets: `draft` (1280×720, fast), `slide` (1920×1080),
-`paper` (3200×2400, ambient occlusion). Background `white`/`black`/`transparent`.
+`paper` (3200×2400, ambient occlusion) — override `width`/`height` freely
+(the hero above is `paper` at 1600×1600). Background `white`/`black`/
+`transparent`. Mixed coloring is a card key away: `color_by: structure` with
+`atoms.structure_colors` (e.g. bcc dark gray, defective atoms white) while
+types listed in `atoms.colors` stay pinned to their species color — that is
+how the hero shows a structure-colored W matrix with orange P solutes.
 
 ## Multimillion-atom workflow
 
@@ -307,51 +400,35 @@ well above every OVITO method's noise floor.
   `python tools/gen-schema-md.py`).
 - Put `# yaml-language-server: $schema=<path>/vizcard.schema.json` at the top
   of a card for editor autocompletion.
-- `skills/ovito-auto-viz/SKILL.md` — teaches LLM/agent sessions the card
-  format so "render the standard DXA view of X" becomes a one-liner.
+- `skills/ovito-auto-viz/SKILL.md` — the agent skill (see above).
 
-## Using it with Claude (the agent skill)
+## Author, funding, citation
 
-`skills/ovito-auto-viz/SKILL.md` is an [Agent Skill](https://github.com/anthropics/skills):
-a plain instruction file (no code) that teaches a Claude session when to use
-`ovzm`, what it must ASK the user instead of guessing (species names, crystal
-orientation, figure creator, colorbar units), and how to compose cards from
-the presets. The tool itself never requires any AI — the skill is an optional
-adapter on top.
+**Author:** Erik Bitzek ([ORCID 0000-0001-7430-3694](https://orcid.org/0000-0001-7430-3694),
+<e.bitzek@mpi-susmat.de>) — ¹ Max-Planck-Institut for Sustainable Materials,
+Düsseldorf, Germany; ² Institute of Materials Simulation (WW8),
+Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU), Fürth, Germany.
+Built with Claude/LLM assistance.
 
-Install:
+**Funding:** Deutsche Forschungsgemeinschaft (DFG, German Research
+Foundation) — NFDI 38/1, project number 460247524
+(**[NFDI-MatWerk](https://nfdi-matwerk.de) consortium**).
 
-- **Claude Code** (CLI): copy the skill folder into your skills directory —
-
-  ```bash
-  mkdir -p ~/.claude/skills
-  cp -R skills/ovito-auto-viz ~/.claude/skills/
-  ```
-
-  It then triggers automatically on requests like "render the standard DXA
-  view of this dump" in any project where `ovzm` is installed.
-
-- **Claude Desktop / Cowork**: add the skill via the app's
-  Settings → Capabilities/Skills (upload or point it at
-  `skills/ovito-auto-viz/`), or ask Claude in a session to package
-  `SKILL.md` as an installable `.skill` file for your account.
-
-Usage is then conversational: *"glide-plane view of
-`SGCMC-D90/dump.1530000.gz`, Cu segregation, paper quality"* — the session
-writes the card (asking for whatever the required-information table says it
-cannot detect), runs `ovzm render`, and shows you the PNG plus the card so
-you can version it with the project.
+**License:** BSD-3-Clause. **Citation:** see [`CITATION.cff`](CITATION.cff)
+(GitHub's "Cite this repository" button).
 
 ## Known issues / roadmap
 
 - **Sessions contain pipeline + styling + camera, not overlays**: the ovito
   Python module (observed on 3.15.5) writes corrupt `.ovito` files when
-  viewport overlays are in the scene, so `ovzm session` skips them. Use
-  `ovzm render` for annotated output.
+  viewport overlays are in the scene, so `ovzm session` skips them (grain
+  tripods included). Use `ovzm render` for annotated output.
 - Keep the OVITO GUI and the `ovito` module on matching versions when
   exchanging session files.
-- Roadmap: comparison-grid shared colorbar for multi-property panels;
-  per-grain tripod follow-ups (DXA segment b/ξ re-expressed in each grain's
-  local frame; orientations imported from grain segmentation / Voronoi tool
-  output); movie polish (frame ranges); `.zst` input; broader `ovzm import`
-  modifier coverage.
+- Roadmap: a small self-contained example (generated structure, nothing to
+  download) to try everything on; DXA segment b/ξ re-expressed in each
+  grain's local frame; grain origins/orientations imported from grain
+  segmentation / Voronoi tool output; comparison-grid shared colorbar for
+  multi-property panels; movie polish (frame ranges); `.zst` input; broader
+  `ovzm import` modifier coverage; ontology-mapped (JSON-LD) provenance
+  export.

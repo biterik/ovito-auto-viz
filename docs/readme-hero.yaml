@@ -1,0 +1,104 @@
+name: wp-gb-crack-hero
+input:
+  file: dump.10.40000
+view:
+  projection: perspective
+  direction_sim_frame:
+  - 0.0706
+  - -0.2124
+  - 0.9746
+  up:
+  - 0
+  - 1
+  - 0
+  center:
+  - 455
+  - 250
+  - 7
+  zoom: 3.2
+atoms:
+  show: all
+  names:
+    1: W
+    3: P
+  color_by: structure
+  structure_colors:
+    bcc:
+    - 0.259
+    - 0.259
+    - 0.259
+    other:
+    - 1.0
+    - 1.0
+    - 1.0
+    fcc:
+    - 1.0
+    - 1.0
+    - 1.0
+    hcp:
+    - 1.0
+    - 1.0
+    - 1.0
+    ico:
+    - 1.0
+    - 1.0
+    - 1.0
+  colors:
+    3:
+    - 0.9
+    - 0.45
+    - 0.1
+  radius:
+    1: 1.3
+    3: 2.2
+pipeline:
+- cna: {}
+grains:
+  items:
+  - name: upper
+    origin:
+    - 370
+    - 330
+    - 7
+    x:
+    - 2
+    - -13
+    - 11
+    y:
+    - 8
+    - -3
+    - -5
+    z:
+    - 1
+    - 1
+    - 1
+  - name: lower
+    origin:
+    - 370
+    - 170
+    - 7
+    x:
+    - -1
+    - -1
+    - 2
+    y:
+    - 1
+    - -1
+    - 0
+    z:
+    - 1
+    - 1
+    - 1
+  tripod:
+    size: 28
+    show_names: true
+annotate:
+  tripod: 'off'
+  labels: 'off'
+  colorbar: false
+output:
+  preset: paper
+  width: 1600
+  height: 1600
+  background: white
+  file: readme-hero.png
