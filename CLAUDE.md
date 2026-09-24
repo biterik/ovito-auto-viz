@@ -48,12 +48,16 @@ validated on macOS arm64 with ovito 3.12.4 / 3.15.5 / 3.16.1 (venvs under
 47 tests green on all three, two more bugs found and fixed (3.12 locale
 reset → explicit utf-8; physics test PATH lookup), Phase-2 items 1+2 done
 (session overlays gated, `annotate.font_family`). Pushed; CI run
-36022191950 green (packaging ×2, render); tag `v0.4.2` pushed. NOT done:
-`gh release create v0.4.2` (blocked by the Claude Code permission
-classifier — Erik runs it) and PyPI (package not published, no publishing
-workflow; README already says `pip install ovito-auto-viz`). Legend
-defect (Phase-2 item 3): vertical-orientation proposal rendered in
-`scratch/s3.16.1/legend-vertical-proposal2.png`, awaiting Erik's call.
+36022191950 green (packaging ×2, render); tag `v0.4.2` pushed; GitHub
+release created by Erik. **PyPI: `ovito-auto-viz 0.4.2` is published**
+(trusted publishing, `.github/workflows/publish.yml`, environment `pypi`;
+publish run 36028213070). Future releases publish on the GitHub release
+event; the workflow refuses a tag that differs from `v<pyproject version>`.
+Verified: fresh venv `pip install ovito-auto-viz` → 0.4.2, `ovzm schema`
+and `ovzm validate` work. Caveat on Apple silicon: pip pulls ovito 3.16.1,
+whose wheel cannot import (libospray bug above) — pin 3.15.5 or symlink.
+Legend defect fixed on `main` after the tag (vertical legend, ships with
+0.4.3).
 
 ## Previous handoff — end of session 2026-08-05
 
