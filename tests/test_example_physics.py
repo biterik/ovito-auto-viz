@@ -29,6 +29,10 @@ pytest.importorskip("ovito", reason="physics test needs the ovito module")
 
 REPO = Path(__file__).resolve().parents[1]
 EXAMPLE = REPO / "examples" / "try-it"
+# the `ovzm` console script that belongs to THIS interpreter (an unactivated
+# venv has it next to python but not on PATH); fall back to PATH lookup.
+OVZM = (shutil.which("ovzm", path=str(Path(sys.executable).parent))
+        or shutil.which("ovzm") or "ovzm")
 
 
 def test_edge_quadrupole_ground_truth(tmp_path):
@@ -39,7 +43,7 @@ def test_edge_quadrupole_ground_truth(tmp_path):
     ident = tmp_path / "identity.yaml"
     ident.write_text("creator: CI Physics Test\n")
     env = dict(os.environ, OVZM_IDENTITY=str(ident))
-    subprocess.run(["ovzm", "render", "edge-dipoles.yaml"],
+    subprocess.run([OVZM, "render", "edge-dipoles.yaml"],
                    cwd=tmp_path, check=True, env=env)
 
     prov = yaml.safe_load(

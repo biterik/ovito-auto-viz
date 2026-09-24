@@ -168,7 +168,8 @@ def _provenance(card: dict, input_path, out_path: Path, scene: dict | None = Non
         prov["resolved_scene"] = scene
     side = out_path.with_suffix(out_path.suffix + ".prov.yaml")
     side.write_text(YAML_CREDIT_HEADER
-                    + yaml.safe_dump(prov, sort_keys=False, allow_unicode=True))
+                    + yaml.safe_dump(prov, sort_keys=False, allow_unicode=True),
+                    encoding="utf-8")
     return side
 
 
@@ -188,7 +189,7 @@ def _identity_defaults() -> dict:
     p = Path(path)
     if p.is_file():
         try:
-            return yaml.safe_load(p.read_text()) or {}
+            return yaml.safe_load(p.read_text(encoding="utf-8")) or {}
         except Exception:
             pass
     return {}
@@ -232,7 +233,7 @@ def resolve_meta(card: dict, *, ask: bool = False, search_dirs=()):
     proj = {}
     if proj_path is not None:
         try:
-            proj = yaml.safe_load(proj_path.read_text()) or {}
+            proj = yaml.safe_load(proj_path.read_text(encoding="utf-8")) or {}
         except Exception as exc:
             print(f"[ovzm] warning: could not read {proj_path}: {exc}",
                   file=sys.stderr)
@@ -304,7 +305,7 @@ def _embed_prov_png(out_path: Path):
         from PIL.PngImagePlugin import PngInfo
         img = Image.open(out_path)
         meta = PngInfo()
-        meta.add_text("ovzm_prov", side.read_text(), zip=True)
+        meta.add_text("ovzm_prov", side.read_text(encoding="utf-8"), zip=True)
         img.save(out_path, pnginfo=meta)
     except Exception as exc:
         print(f"[ovzm] note: could not embed provenance in PNG: {exc}",

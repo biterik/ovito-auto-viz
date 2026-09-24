@@ -83,7 +83,7 @@ def _load_grains_file(path: Path) -> list:
     if not path.is_file():
         raise _err(f"grains file not found: {path}")
     try:
-        doc = yaml.safe_load(path.read_text())
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
         raise _err(f"grains file {path} is not valid YAML: {exc}")
     if not isinstance(doc, dict) or not isinstance(doc.get("grains"), list):

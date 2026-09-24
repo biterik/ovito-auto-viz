@@ -101,7 +101,7 @@ def load_schema() -> dict:
     if _SCHEMA_CACHE is None:
         for cand in _schema_search_paths():
             if cand.is_file():
-                _SCHEMA_CACHE = json.loads(cand.read_text())
+                _SCHEMA_CACHE = json.loads(cand.read_text(encoding="utf-8"))
                 break
         else:
             raise SchemaUnavailableError(
@@ -135,7 +135,7 @@ def validate(card: dict) -> list[str]:
 def load_card(path: str | Path, *, do_validate: bool = True) -> dict:
     """Load a viz card, resolving the `extends:` chain (deepest ancestor first)."""
     path = Path(path)
-    card = yaml.safe_load(path.read_text()) or {}
+    card = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     chain = [card]
     seen = {str(path.resolve())}
     cur = card
@@ -145,7 +145,7 @@ def load_card(path: str | Path, *, do_validate: bool = True) -> dict:
         if key in seen:
             raise ValueError(f"circular 'extends' chain at {ppath}")
         seen.add(key)
-        cur = yaml.safe_load(ppath.read_text()) or {}
+        cur = yaml.safe_load(ppath.read_text(encoding="utf-8")) or {}
         chain.append(cur)
     merged: dict = {}
     for layer in reversed(chain):  # ancestors first, card last

@@ -35,7 +35,7 @@ _PRIVATE_ASSIGN = re.compile(r"^\s*(?!self\b)(?!cls\b)[A-Za-z_][\w\.\[\]\"']*\._
 def test_no_private_attributes_set_on_foreign_objects():
     offenders = []
     for py in sorted(SRC.glob("*.py")):
-        for m in _PRIVATE_ASSIGN.finditer(py.read_text()):
+        for m in _PRIVATE_ASSIGN.finditer(py.read_text(encoding="utf-8")):
             line = m.group(0).strip()
             # module-level globals of our own (e.g. `_QAPP = ...`) never have
             # a dot before the underscore; anything that does is suspect.
@@ -44,6 +44,25 @@ def test_no_private_attributes_set_on_foreign_objects():
         "ovzm must not attach private attributes to OVITO objects "
         "(pybind11 objects have no __dict__); use pipelinebuild.set_meta():\n  "
         + "\n  ".join(offenders))
+
+
+# Text I/O without an explicit encoding: `import ovito` (3.12.x, verified
+# 3.12.4 on macOS) resets the C locale to "C", so a later read_text()/open()
+# decodes as US-ASCII and every card with an "Å" fails. Always pass utf-8.
+_TEXT_IO_NO_ENC = re.compile(
+    r"\.(read_text|write_text)\((?![^)]*encoding=)[^)]*\)"
+    r"|(?<![\w.])open\([^)]*['\"][rwa]t?['\"](?![^)]*encoding=)[^)]*\)")
+
+
+def test_text_io_always_names_utf8():
+    offenders = []
+    for py in sorted(SRC.glob("*.py")):
+        for i, line in enumerate(py.read_text(encoding="utf-8").splitlines(), 1):
+            if _TEXT_IO_NO_ENC.search(line) and "encoding=" not in line:
+                offenders.append(f"{py.name}:{i}: {line.strip()}")
+    assert not offenders, (
+        "text I/O in ovzm must pass encoding='utf-8' (ovito 3.12 resets the "
+        "C locale to ASCII on import):\n  " + "\n  ".join(offenders))
 
 
 # --------------------------------------------------------------------------

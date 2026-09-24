@@ -91,7 +91,7 @@ def main(argv=None):
         from .importer import import_session
         text = import_session(args.state)
         if args.output:
-            with open(args.output, "w") as fh:
+            with open(args.output, "w", encoding="utf-8") as fh:
                 fh.write(text)
             print(f"[ovzm] wrote {args.output}")
         else:
