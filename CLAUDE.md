@@ -42,10 +42,18 @@ Findings, all verified by rendering (details in the release notes):
 7. `map: plasma` never existed in OVITO; ovzm silently rendered the default
    gradient while prov claimed plasma. Unknown maps now abort.
 
-Version bumped to 0.4.2 in `pyproject.toml`, `src/ovzm/__init__.py`,
-`CITATION.cff`. Tests: 44 pass on 3.16.1 and on 3.15.5 in the sandbox
-(`python -m pytest tests -q` from a scratch dir). Not yet run in Erik's Mac
-conda env, not yet pushed, CI not yet observed — that is the task file's job.
+**Claude Code session 2026-09-24 (on M5) executed the task file:** matrix
+validated on macOS arm64 with ovito 3.12.4 / 3.15.5 / 3.16.1 (venvs under
+`.venvs/`, gitignored; 3.16.1 needs the libospray symlink, see gotchas),
+47 tests green on all three, two more bugs found and fixed (3.12 locale
+reset → explicit utf-8; physics test PATH lookup), Phase-2 items 1+2 done
+(session overlays gated, `annotate.font_family`). Pushed; CI run
+36022191950 green (packaging ×2, render); tag `v0.4.2` pushed. NOT done:
+`gh release create v0.4.2` (blocked by the Claude Code permission
+classifier — Erik runs it) and PyPI (package not published, no publishing
+workflow; README already says `pip install ovito-auto-viz`). Legend
+defect (Phase-2 item 3): vertical-orientation proposal rendered in
+`scratch/s3.16.1/legend-vertical-proposal2.png`, awaiting Erik's call.
 
 ## Previous handoff — end of session 2026-08-05
 
