@@ -137,9 +137,38 @@ def make_viewport(card: dict, orientation: Orientation | None) -> Viewport:
 # ---------------------------------------------------------------------------
 # overlays
 
+_QAPP = None
+
+
+def ensure_gui_app():
+    """Make sure a QGuiApplication exists BEFORE any overlay is created.
+
+    Two independent reasons, both verified by rendering:
+    * ovito 3.16+: an overlay constructed before the Qt application exists
+      gets a font with an EMPTY family (',-1,-1,...'). Text is then measured
+      with one font and drawn with another, and every label, legend title
+      and tripod axis label is clipped after a few characters. With the
+      application in place the default font resolves to a real family
+      ('Sans Serif' -> e.g. DejaVu Sans) and text renders completely.
+      3.15.5 was tolerant of the empty family; 3.16.1 is not.
+    * PythonViewportOverlay (grain tripods) paints text with QPainter, which
+      aborts inside QFontDatabase without an application when the card has
+      labels off + colorbar false (no native overlay created one for us).
+    Idempotent; the ovito module itself creates an application in most
+    code paths, in which case this is a no-op.
+    """
+    global _QAPP
+    from ovito.qt_compat import QtGui
+    if QtGui.QGuiApplication.instance() is None:
+        import os
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        _QAPP = QtGui.QGuiApplication(["ovzm"])
+    return QtGui.QGuiApplication.instance()
+
 
 def add_overlays(vp: Viewport, card: dict, pipe, data, orientation, label_text):
     ann = card.get("annotate", {}) or {}
+    ensure_gui_app()   # MUST precede every overlay constructor (see docstring)
 
     # --- coordinate tripod with Miller labels
     tripod_cfg = ann.get("tripod", "miller")
@@ -228,16 +257,7 @@ def add_grain_tripods(vp: Viewport, grains):
     """
     if not grains or not grains.get("grains"):
         return
-    # The overlay paints text with QPainter, which needs a QGuiApplication.
-    # Native overlays (labels/legend) construct one as a side effect, but a
-    # card with labels off + colorbar false has none -> hard abort in
-    # QFontDatabase. Ensure the app exists BEFORE render time.
-    from ovito.qt_compat import QtGui
-    if QtGui.QGuiApplication.instance() is None:
-        import os
-        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-        global _QAPP
-        _QAPP = QtGui.QGuiApplication(["ovzm"])
+    ensure_gui_app()   # QPainter text needs the application (see docstring)
     # same x/y/z color convention as the corner tripod (its axis defaults)
     ref = CoordinateTripodOverlay()
     axis_colors = [tuple(float(c) for c in col) for col in

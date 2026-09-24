@@ -39,7 +39,7 @@ from .labels import dxa_summary
 from .pipelinebuild import (apply_color_mode, build_pipeline,
                             check_species_names, resolve_auto_color_ranges,
                             style_atoms, style_structure_types)
-from .scene import (add_grain_tripods, add_overlays, make_renderer,
+from .scene import (add_grain_tripods, add_overlays, ensure_gui_app, make_renderer,
                     make_viewport, resolve_output)
 
 
@@ -152,6 +152,7 @@ def run_grid(card_path: str, out_override: str | None = None, *,
             # grain tripods are data annotation, not legend: EVERY panel.
             # (grid.tripod first|all governs only the corner tripod.)
             add_grain_tripods(vp, grains)
+        ensure_gui_app()   # before ANY overlay constructor (3.16 font clipping)
         title = TextLabelOverlay(text=p["label"])
         title.font_size = 0.035
         from .scene import _qt_alignment

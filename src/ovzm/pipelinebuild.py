@@ -38,11 +38,44 @@ STRUCTURE_IDS = {  # PTM/CNA StructureType integer ids share this layout
     "other": 0, "fcc": 1, "hcp": 2, "bcc": 3, "ico": 4,
 }
 
+#: card `map:` key -> ColorCodingModifier gradient class. These are the
+#: gradients the ovito module actually ships (verified 3.12 .. 3.16); a raw
+#: OVITO class name (e.g. 'Viridis') is accepted too. NB: there is no
+#: 'plasma' gradient in OVITO — earlier ovzm versions listed it and silently
+#: fell back to the default gradient while prov claimed 'plasma'.
 COLORMAPS = {
-    "viridis": "Viridis", "magma": "Magma", "plasma": "Plasma",
+    "viridis": "Viridis", "magma": "Magma",
     "hot": "Hot", "jet": "Jet", "grayscale": "Grayscale",
-    "rainbow": "Rainbow", "blue-white-red": "BlueWhiteRed",
+    "rainbow": "Rainbow", "cyclic-rainbow": "CyclicRainbow",
+    "blue-white-red": "BlueWhiteRed",
 }
+
+
+# ---------------------------------------------------------------------------
+# Side table for ovzm-specific facts about OVITO objects.
+#
+# OVITO's Python objects (modifiers, viewports, overlays, ...) are pybind11
+# wrappers WITHOUT a __dict__: `mod._ovzm_x = ...` raises AttributeError on
+# every version (verified 3.12 .. 3.16). Anything ovzm needs to remember about
+# an OVITO object therefore lives here, keyed by the object's identity. The
+# object itself is stored alongside so its id() cannot be recycled while the
+# entry is alive. Never set custom attributes on OVITO objects.
+
+_OBJECT_META: dict[int, tuple[object, dict]] = {}
+
+
+def set_meta(obj, **facts) -> None:
+    """Remember ovzm-side facts about an OVITO object (see _OBJECT_META)."""
+    entry = _OBJECT_META.setdefault(id(obj), (obj, {}))
+    entry[1].update(facts)
+
+
+def get_meta(obj, key: str, default=None):
+    """Read a fact stored with set_meta(); `default` if unknown."""
+    entry = _OBJECT_META.get(id(obj))
+    if entry is None or entry[0] is not obj:
+        return default
+    return entry[1].get(key, default)
 
 
 def _color_coding(spec: dict) -> ColorCodingModifier:
@@ -52,13 +85,14 @@ def _color_coding(spec: dict) -> ColorCodingModifier:
     if not auto_range:
         kwargs["start_value"], kwargs["end_value"] = float(rng[0]), float(rng[1])
     mod = ColorCodingModifier(**kwargs)
-    mod._ovzm_auto_range = auto_range   # resolved against the data in the runner
-    mod._ovzm_map = spec.get("map", "viridis")
     cmap = spec.get("map", "viridis")
+    # resolved against the data in the runner (range:auto) / echoed into prov
+    set_meta(mod, auto_range=auto_range, map=cmap)
     try:
         mod.gradient = getattr(ColorCodingModifier, COLORMAPS.get(cmap, cmap))()
     except AttributeError:
-        pass  # keep default gradient
+        raise SystemExit(
+            f"[ovzm] unknown color map '{cmap}'; use one of {sorted(COLORMAPS)}")
     return mod
 
 
@@ -70,7 +104,7 @@ def resolve_auto_color_ranges(pipe, data):
     for mod in pipe.modifiers:
         if not isinstance(mod, ColorCodingModifier):
             continue
-        if getattr(mod, "_ovzm_auto_range", False):
+        if get_meta(mod, "auto_range", False):
             prop = str(mod.property)
             name = prop.split("/")[-1]
             comp = None
@@ -89,7 +123,7 @@ def resolve_auto_color_ranges(pipe, data):
             "property": str(mod.property),
             "start": float(mod.start_value),
             "end": float(mod.end_value),
-            "map": getattr(mod, "_ovzm_map", "default"),
+            "map": get_meta(mod, "map", "default"),
         })
     return resolved
 
