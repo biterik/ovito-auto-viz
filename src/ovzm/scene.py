@@ -234,7 +234,16 @@ def add_overlays(vp: Viewport, card: dict, pipe, data, orientation, label_text):
             corner = cb.get("corner", "top_right")
             leg.alignment = _qt_alignment(corner)
             leg.font_size = float(cb.get("font_size", 0.045))
-            leg.offset_y = -0.06 if corner.startswith("top") else 0.02
+            # Vertical list: laid out horizontally the six structure-type
+            # labels collided and clipped at the frame edge ("BCCCubic
+            # diamondHexagonal diamond", known defect since 0.4.0). The
+            # overlay API has no label filter, so all types stay listed.
+            # Sizes are the ones Erik approved on 2026-09-24.
+            from ovito.qt_compat import QtCore
+            leg.orientation = QtCore.Qt.Orientation.Vertical
+            leg.legend_size = 0.30
+            leg.label_size = 1.4
+            leg.offset_y = -0.03 if corner.startswith("top") else 0.02
             leg.offset_x = -0.01
             apply_font_family(leg, card)
             vp.overlays.append(leg)

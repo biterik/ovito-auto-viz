@@ -326,7 +326,14 @@ overwriting — he edits between sessions.
    segmentation / Voronoi-tool output (incl. quaternion input); per-grain
    atom coloring / GB extraction / example polycrystal datasets.
 
-## Known cosmetic defect (found 2026-08-05, not fixed)
+## Former cosmetic defect (found 2026-08-05, FIXED 2026-09-24 after v0.4.2)
+
+Fixed with option (a): the discrete legend is now vertical
+(`legend_size 0.30`, `label_size 1.4`, Erik approved the render). All six
+types are still listed — the API has no label filter; option (b) below
+remains open. This landed on `main` AFTER the v0.4.2 tag, so it ships with
+the next release. Original description:
+
 
 The discrete structure-type legend (`ColorLegendOverlay(property=...)`,
 `scene.py` §(b)) lists **all six** PTM structure types even when only one is
