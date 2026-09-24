@@ -52,7 +52,7 @@ These must come from the user if not auto-detectable; ask for them explicitly
 
    ```bash
    pip install git+https://github.com/biterik/ovito-auto-viz.git   # add --break-system-packages in a throwaway container
-   apt-get install -y libopengl0 libegl1 libgl1 libglx0 libxkbcommon0   # ovito's GL runtime
+   apt-get install -y libopengl0 libegl1 libgl1 libglx0 libxkbcommon0 mesa-vulkan-drivers   # ovito graphics runtime (Vulkan driver needed since ovito 3.16)
    ```
 
    Sanity-check with `ovzm schema | head -3` — it must print JSON. (Versions

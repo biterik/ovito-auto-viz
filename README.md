@@ -2,6 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21796154.svg)](https://doi.org/10.5281/zenodo.21796154)
 [![CI](https://github.com/biterik/ovito-auto-viz/actions/workflows/ci.yml/badge.svg)](https://github.com/biterik/ovito-auto-viz/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/ovito-auto-viz)](https://pypi.org/project/ovito-auto-viz/)
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
 
 **Fast, automated, reproducible and FAIR visualization of atomistic
@@ -90,17 +91,26 @@ OS package manager).
 
 ```bash
 python -m venv ~/venvs/ovzm && source ~/venvs/ovzm/bin/activate   # or: conda activate <env>
-pip install git+https://github.com/biterik/ovito-auto-viz.git
+pip install ovito-auto-viz
 ```
 
-Headless machines (clusters, CI, containers) additionally need the GL
-runtime the `ovito` module links against — no GPU or display required
-(rendering uses the Tachyon software ray-tracer):
+Headless machines (clusters, CI, containers) additionally need the
+graphics runtime the `ovito` module links against — no GPU or display
+required (rendering uses the Tachyon software ray-tracer). Since ovito 3.16
+the Linux module renders through **Vulkan** and needs a Vulkan *driver*
+even for offscreen renders; Mesa's `lavapipe` software driver does the job
+without a GPU:
 
 ```bash
-sudo apt-get install libopengl0 libegl1 libgl1 libglx0 libxkbcommon0   # Debian/Ubuntu
-# Fedora/RHEL: libglvnd-opengl libglvnd-egl libglvnd-glx libxkbcommon
+sudo apt-get install libopengl0 libegl1 libgl1 libglx0 libxkbcommon0 mesa-vulkan-drivers   # Debian/Ubuntu
+# Fedora/RHEL: libglvnd-opengl libglvnd-egl libglvnd-glx libxkbcommon mesa-vulkan-drivers
+# openSUSE:    ... libvulkan_lvp
 ```
+
+If `ovzm render` stops with "Could not initialize the Vulkan graphics
+backend", that driver is what is missing. On a cluster without root, ask the
+admins for it or fall back to `pip install "ovito<3.16"`, which still uses
+OpenGL and needs only the first five packages.
 
 On HPC, install into a venv under scratch (never `$HOME`) and run renders
 inside a batch job, not on a login node.
@@ -109,7 +119,16 @@ inside a batch job, not on a login node.
 
 ```bash
 conda activate <your-env>          # conda-forge env recommended on macOS
-pip install git+https://github.com/biterik/ovito-auto-viz.git
+pip install ovito-auto-viz
+```
+
+Known upstream wheel bug: on Apple-silicon Macs `ovito==3.16.1` fails to
+import with `Library not loaded: @loader_path/libospray.3.2.0.dylib` (the
+wheel ships the file only as `libospray.3.dylib`). Either
+`pip install "ovito==3.15.5"`, or add the missing name:
+
+```bash
+ln -s libospray.3.dylib "$(python -c 'import ovito,os;print(os.path.dirname(ovito.__file__))')/plugins/libospray.3.2.0.dylib"
 ```
 
 **Windows**
@@ -118,7 +137,7 @@ The `ovito` module ships Windows wheels, so the same install should work in
 an Anaconda Prompt or venv (not yet routinely tested — reports welcome):
 
 ```powershell
-pip install git+https://github.com/biterik/ovito-auto-viz.git
+pip install ovito-auto-viz
 ```
 
 If anything misbehaves natively, WSL2 + the Linux instructions above is the
@@ -130,7 +149,9 @@ reliable fallback.
 ovzm schema | head -3
 ```
 
-For development, install editable from a clone:
+The latest development version comes straight from GitHub:
+`pip install git+https://github.com/biterik/ovito-auto-viz.git` — and for
+development, install editable from a clone:
 `pip install -e /absolute/path/to/ovito-auto-viz`.
 
 ## Quickstart
