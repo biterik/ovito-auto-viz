@@ -39,8 +39,9 @@ from .labels import dxa_summary
 from .pipelinebuild import (apply_color_mode, build_pipeline,
                             check_species_names, resolve_auto_color_ranges,
                             style_atoms, style_structure_types)
-from .scene import (add_grain_tripods, add_overlays, ensure_gui_app, make_renderer,
-                    make_viewport, resolve_output)
+from .scene import (add_grain_tripods, add_overlays, apply_font_family,
+                    ensure_gui_app, make_renderer, make_viewport,
+                    resolve_output)
 
 
 def _panel_stem(path: str) -> str:
@@ -158,6 +159,7 @@ def run_grid(card_path: str, out_override: str | None = None, *,
         from .scene import _qt_alignment
         title.alignment = _qt_alignment("top_left")
         title.offset_x, title.offset_y = 0.01, -0.01
+        apply_font_family(title, card)
         vp.overlays.append(title)
         f = tmpdir / f"panel{i}.png"
         vp.render_image(filename=str(f), size=(w, h), renderer=renderer,

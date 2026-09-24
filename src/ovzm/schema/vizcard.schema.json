@@ -450,6 +450,10 @@
           "minItems": 3,
           "maxItems": 3
         },
+        "font_family": {
+          "type": "string",
+          "description": "Font family for all text overlays (tripod labels, legend, label block, grid panel titles), e.g. 'DejaVu Sans' or 'Times New Roman'. Honoured on ovito >= 3.16 (per-overlay font_family); ignored with a note on older modules. The provenance records the request and whether it was applied."
+        },
         "extra": {
           "description": "Extra caption line(s) appended verbatim.",
           "anyOf": [

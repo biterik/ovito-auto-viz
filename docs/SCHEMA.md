@@ -41,6 +41,7 @@ run `python tools/gen-schema-md.py` after changing the schema.
 | `annotate.labels_corner` | corner |  |
 | `annotate.labels_font_size` | number |  |
 | `annotate.labels_color` | array of number |  |
+| `annotate.font_family` | string | Font family for all text overlays (tripod labels, legend, label block, grid panel titles), e.g. 'DejaVu Sans' or 'Times New Roman'. Honoured on ovito >= 3.16 (per-overlay font_family); ignored with a note on older modules. The provenance records the request and whether it was applied. |
 | `annotate.extra` | string or array of string | Extra caption line(s) appended verbatim. |
 | `annotate.dxa_line_width` | number | Dislocation line width in Å (default 2.0). |
 | `annotate.defect_mesh` | boolean | Render DXA's translucent defect/interface mesh (default true). Set false for clean line-and-atoms figures. |

@@ -31,12 +31,13 @@ Findings, all verified by rendering (details in the release notes):
 3. ovito ≥ 3.16 on Linux needs a Vulkan driver (`mesa-vulkan-drivers`) for
    headless renders. README, CI, SKILL.md updated.
 4. `ovito.scene.save()` with overlays round-trips correctly on 3.16.1 (was
-   corrupt ≤ 3.15.5) — the `ovzm session` overlay skip can become
-   version-gated. Not done yet.
+   corrupt ≤ 3.15.5) — DONE in the Claude Code session that followed:
+   `ovzm session` embeds overlays when `runner.SESSION_OVERLAYS_OK`.
 5. Same `font_size` renders ~30 % smaller on 3.16 than 3.15 (OVITO change).
    Not compensated. `font_family`/`font_style` are new overlay attributes
-   in 3.16 (`font` string deprecated) — a card option is a possible
-   follow-up.
+   in 3.16 (`font` string deprecated) — `annotate.font_family` card option
+   DONE (applied via `scene.apply_font_family`, prov records
+   `font_family: {requested, applied}`; `font_style` not exposed).
 6. `ovzm import` emitted `input.file: file:///…`; fixed (plain path).
 7. `map: plasma` never existed in OVITO; ovzm silently rendered the default
    gradient while prov claimed plasma. Unknown maps now abort.

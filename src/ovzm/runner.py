@@ -106,6 +106,16 @@ def _resolved_scene(pipe, vp, card, colorbars, dxa, full_data, orientation,
             cb["units"] = cb_card.get("units")
             cb["title"] = cb_card.get("title", cb["property"].split("/")[-1])
         scene["colorbars"] = colorbars
+    fam = (card.get("annotate") or {}).get("font_family")
+    if fam:
+        # honoured only where the overlay API has font_family (ovito >= 3.16)
+        applied = any(getattr(o, "font_family", None) == str(fam)
+                      for o in vp.overlays)
+        scene["font_family"] = {"requested": str(fam), "applied": applied}
+        if not applied:
+            print(f"[ovzm] note: annotate.font_family '{fam}' ignored: the "
+                  f"ovito module {ovito.version_string} has no per-overlay "
+                  "font_family (added in 3.16)", file=sys.stderr)
     scene["camera"] = {
         "direction_sim_frame": [round(float(x), 6) for x in vp.camera_dir],
         "projection": "ortho" if vp.type == type(vp).Type.Ortho else "perspective",

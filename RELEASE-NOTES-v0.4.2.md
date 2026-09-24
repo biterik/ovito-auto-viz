@@ -40,6 +40,12 @@ Compatibility release: ovzm now works with the current `ovito` module
   file when overlays are in the scene, so there the previous behaviour
   (skip + stderr note) is kept. The provenance records which case applied
   (`resolved_scene.session_overlays`).
+- **`annotate.font_family`** (string): font family for every text overlay
+  (tripod labels, legend, label block, grid panel titles). Uses the
+  per-overlay `font_family` attribute ovito 3.16 introduced; on older
+  modules it is ignored with a note. The provenance records
+  `font_family: {requested, applied}`. The 3.15→3.16 font-size change is
+  deliberately not compensated.
 
 ## OVITO 3.16 notes (verified 2026-09-24 on 3.16.1)
 

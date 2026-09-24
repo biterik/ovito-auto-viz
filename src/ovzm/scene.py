@@ -166,6 +166,21 @@ def ensure_gui_app():
     return QtGui.QGuiApplication.instance()
 
 
+
+def apply_font_family(overlay, card) -> bool:
+    """`annotate.font_family` -> overlay.font_family, when the overlay has it.
+
+    ovito 3.16 added `font_family`/`font_style` to every text overlay and
+    deprecated the `font` string; older modules have neither, so the card
+    value is silently not applied there (the prov records `applied`).
+    Returns True when set.
+    """
+    fam = (card.get("annotate") or {}).get("font_family")
+    if fam and hasattr(overlay, "font_family"):
+        overlay.font_family = str(fam)
+        return True
+    return False
+
 def add_overlays(vp: Viewport, card: dict, pipe, data, orientation, label_text):
     ann = card.get("annotate", {}) or {}
     ensure_gui_app()   # MUST precede every overlay constructor (see docstring)
@@ -184,6 +199,7 @@ def add_overlays(vp: Viewport, card: dict, pipe, data, orientation, label_text):
             tripod.axis1_label = f"x={lx}"
             tripod.axis2_label = f"y={ly}"
             tripod.axis3_label = f"z={lz}"
+        apply_font_family(tripod, card)
         vp.overlays.append(tripod)
 
     # --- colorbar: ALWAYS present when atoms carry color information.
@@ -202,6 +218,7 @@ def add_overlays(vp: Viewport, card: dict, pipe, data, orientation, label_text):
                 leg.format_string = cb.get("format", "%g")
                 leg.offset_y = -0.06 if cb.get("corner", "top_right").startswith("top") else 0.02
                 leg.offset_x = -0.01
+                apply_font_family(leg, card)
                 vp.overlays.append(leg)
                 have_continuous = True
                 break
@@ -219,6 +236,7 @@ def add_overlays(vp: Viewport, card: dict, pipe, data, orientation, label_text):
             leg.font_size = float(cb.get("font_size", 0.045))
             leg.offset_y = -0.06 if corner.startswith("top") else 0.02
             leg.offset_x = -0.01
+            apply_font_family(leg, card)
             vp.overlays.append(leg)
         except Exception as exc:
             import sys
@@ -241,6 +259,7 @@ def add_overlays(vp: Viewport, card: dict, pipe, data, orientation, label_text):
             lab.text_color = color
             lab.offset_x = 0.01 if corner.endswith("left") else -0.01
             lab.offset_y = (-(0.012 + i * step)) if top else (0.012 + (len(lines) - 1 - i) * step)
+            apply_font_family(lab, card)
             vp.overlays.append(lab)
 
 

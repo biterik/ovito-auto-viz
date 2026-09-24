@@ -98,5 +98,23 @@ def test_invalid_card_is_actually_rejected(tmp_path):
         card_mod.load_card(cardfile)
 
 
+def test_font_family_is_validated(tmp_path):
+    """annotate.font_family (0.4.2): a string is accepted, anything else is
+    rejected by the schema, not silently passed through."""
+    good = tmp_path / "good.yaml"
+    good.write_text(
+        "name: font\ninput: {file: nonexistent.dump}\n"
+        "annotate: {font_family: DejaVu Sans}\nmeta: {creator: CI}\n",
+        encoding="utf-8")
+    assert card_mod.load_card(good)["annotate"]["font_family"] == "DejaVu Sans"
+    bad = tmp_path / "bad.yaml"
+    bad.write_text(
+        "name: font\ninput: {file: nonexistent.dump}\n"
+        "annotate: {font_family: [1, 2]}\nmeta: {creator: CI}\n",
+        encoding="utf-8")
+    with pytest.raises(ValueError):
+        card_mod.load_card(bad)
+
+
 def test_version_is_exposed():
     assert ovzm.__version__
