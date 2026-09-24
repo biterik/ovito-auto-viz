@@ -33,6 +33,14 @@ Compatibility release: ovzm now works with the current `ovito` module
 - The physics test looked for `ovzm` on `PATH`; it now uses the console
   script next to the running interpreter (unactivated venvs work).
 
+## New
+
+- **`ovzm session` embeds the overlays on ovito ≥ 3.16.1** (tripod, label
+  block, colorbar/legend, grain tripods). Older modules corrupt the `.ovito`
+  file when overlays are in the scene, so there the previous behaviour
+  (skip + stderr note) is kept. The provenance records which case applied
+  (`resolved_scene.session_overlays`).
+
 ## OVITO 3.16 notes (verified 2026-09-24 on 3.16.1)
 
 - The Linux module renders through Vulkan. Headless machines additionally
@@ -42,9 +50,8 @@ Compatibility release: ovzm now works with the current `ovito` module
 - Same `font_size` renders ~30 % smaller than on 3.15 — OVITO's own change
   in font metrics; card values were not adjusted.
 - `ovito.scene.save()` with overlays in the scene, which produced corrupt
-  session files up to 3.15.5 (the reason `ovzm session` drops overlays),
-  round-trips correctly on 3.16.1. Re-enabling overlays in sessions for
-  ovito ≥ 3.16.1 is a candidate for the next release.
+  session files up to 3.15.5, round-trips correctly on 3.16.1 — hence the
+  version-gated session overlays above.
 - `OpenGLRenderer` is now an alias of `StandardRenderer`; the renderer
   `outlines_*` parameters were removed (ovzm never used them).
 - **macOS arm64 wheel bug in ovito 3.16.1** (verified 2026-09-24, Python

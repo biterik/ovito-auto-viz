@@ -153,3 +153,42 @@ def test_overlay_text_is_not_clipped(tmp_path):
         pipe.remove_from_scene()
     assert widths["long"] > 3 * widths["short"], (
         f"long label appears clipped: {widths}")
+
+
+def test_session_overlays_follow_the_version_gate(tmp_path):
+    """ovito.scene.save() corrupted .ovito files with overlays up to 3.15.5
+    and round-trips them from 3.16.1. ovzm session embeds the render
+    viewport's overlays only on >= 3.16.1 (runner.SESSION_OVERLAYS_OK). Save
+    here, load in a FRESH process, and check the overlays came back (3.16.1+)
+    or were left out (older)."""
+    import subprocess
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from make_fcc import main as write_fcc  # noqa: E402
+    from ovzm.runner import SESSION_OVERLAYS_OK, run_session
+
+    write_fcc(str(tmp_path / "fcc.data"), n=4)
+    card = tmp_path / "s.yaml"
+    card.write_text("name: s\ninput: {file: fcc.data}\n"
+                    "crystal: {x: [1,0,0], y: [0,1,0], z: [0,0,1], lattice: fcc}\n"
+                    "atoms: {show: all, names: {1: Ni}}\n"
+                    "annotate: {colorbar: false}\nmeta: {creator: test}\n",
+                    encoding="utf-8")
+    out = tmp_path / "s.ovito"
+    try:
+        run_session(str(card), str(out))
+    finally:
+        for p in list(ovito.scene.pipelines):
+            p.remove_from_scene()
+    code = ("import sys, ovito; ovito.scene.load(sys.argv[1]); "
+            "print('OVERLAYS=' + ','.join(type(o).__name__ "
+            "for o in ovito.scene.viewports.active_vp.overlays))")
+    res = subprocess.run([sys.executable, "-c", code, str(out)],
+                         capture_output=True, text=True, check=True)
+    line = [l for l in res.stdout.splitlines() if l.startswith("OVERLAYS=")][-1]
+    names = [n for n in line[len("OVERLAYS="):].split(",") if n]
+    if SESSION_OVERLAYS_OK:
+        # the tiny data file yields no label lines: tripod is the one overlay
+        assert names == ["CoordinateTripodOverlay"], names
+    else:
+        assert names == [], names

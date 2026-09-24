@@ -472,10 +472,12 @@ Foundation) — NFDI 38/1, project number 460247524
 
 ## Known issues / roadmap
 
-- **Sessions contain pipeline + styling + camera, not overlays**: the ovito
-  Python module (observed on 3.15.5) writes corrupt `.ovito` files when
-  viewport overlays are in the scene, so `ovzm session` skips them (grain
-  tripods included). Use `ovzm render` for annotated output.
+- **Sessions carry overlays only with ovito ≥ 3.16.1**: older modules
+  (observed on 3.15.5) write corrupt `.ovito` files when viewport overlays
+  are in the scene, so there `ovzm session` skips them (grain tripods
+  included) and says so; the pipeline, styling and camera are always saved.
+  Use `ovzm render` for annotated output on older versions. The
+  provenance records which case applied (`session_overlays`).
 - Keep the OVITO GUI and the `ovito` module on matching versions when
   exchanging session files.
 - Roadmap: a small self-contained example (generated structure, nothing to

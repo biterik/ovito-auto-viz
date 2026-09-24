@@ -226,9 +226,14 @@ view; this file is the developer/agent view.
   `.venvs/ov3.16.1`); documented in README (macOS) and the release notes.
 
 - `ovito.scene.save()` writes **corrupt** session files if viewport overlays
-  are in the scene on ≤ 3.15.5 → `ovzm session` deliberately skips overlays.
-  Re-tested 2026-09-24: OK on 3.16.1 (their changelog: "fixed a crash of
-  Scene.save() … default-constructed font").
+  are in the scene on ≤ 3.15.5; OK from 3.16.1 (their changelog: "fixed a
+  crash of Scene.save() … default-constructed font"). Since 0.4.2
+  `runner.SESSION_OVERLAYS_OK` gates it: ≥ 3.16.1 copies the render
+  viewport's overlays into the session (prov records
+  `session_overlays: true`), older versions skip them with the stderr note.
+  Observation 2026-09-24: with `ensure_gui_app()` in place, 3.15.5 also
+  loaded such a file in the Python module — untested in the GUI, so the
+  gate stays where the task specified it.
 - Naming a ParticleType (e.g. "Ni") RESETS its color/radius to element
   defaults → set names BEFORE card colors/radii (`style_atoms`).
 - OVITO expression language: no leading `!(...)`; use `(expr) == 0`.

@@ -76,6 +76,11 @@ def _auto_outname(card: dict, input_path: str, suffix: str) -> Path:
     return Path.cwd() / f"{_figure_id(card, input_path)}{suffix}"
 
 
+#: ovito.scene.save() with viewport overlays in the scene: corrupt file up
+#: to 3.15.5, correct from 3.16.1 (see run_session).
+SESSION_OVERLAYS_OK = tuple(ovito.version[:3]) >= (3, 16, 1)
+
+
 def _resolved_scene(pipe, vp, card, colorbars, dxa, full_data, orientation,
                     grains=None):
     """The fully RESOLVED scene for the .prov.yaml — everything needed to
@@ -421,10 +426,6 @@ def run_session(card_path: str, out_override: str | None = None, *,
                 else _auto_outname(card, input_path, ".ovito"))
     out_path.parent.mkdir(parents=True, exist_ok=True)
     # adopt our configured camera into the session's viewport layout.
-    # NOTE: overlays are deliberately NOT saved into the session — the ovito
-    # Python module (observed on 3.15.5) writes corrupt .ovito files when
-    # viewport overlays are present in the scene. Labels/tripod/colorbar are
-    # a render-path feature; the session gives you data + pipeline + camera.
     try:
         ovito.scene.viewports.active_vp.type = vp.type
         ovito.scene.viewports.active_vp.camera_dir = vp.camera_dir
@@ -433,10 +434,27 @@ def run_session(card_path: str, out_override: str | None = None, *,
     except Exception as exc:  # session still usable without camera transfer
         print(f"[ovzm] note: could not transfer camera to session viewport: {exc}",
               file=sys.stderr)
-    print("[ovzm] note: overlays (tripod/labels/colorbar"
-          + ("/grain tripods" if scene.get("grains") else "")
-          + ") are not embedded in sessions; use 'ovzm render' for the "
-          "annotated image", file=sys.stderr)
+    # Overlays: ovito.scene.save() wrote corrupt .ovito files when viewport
+    # overlays were in the scene up to 3.15.5 (their 3.16 changelog: "fixed a
+    # crash of Scene.save() ... default-constructed font"). On >= 3.16.1 the
+    # file round-trips cleanly (verified 2026-09-24), so the render
+    # viewport's overlays (tripod, labels, colorbar/legend, grain tripods)
+    # are carried into the session there; below that version they are
+    # dropped as before.
+    scene["session_overlays"] = SESSION_OVERLAYS_OK
+    if SESSION_OVERLAYS_OK:
+        try:
+            for ov in vp.overlays:
+                ovito.scene.viewports.active_vp.overlays.append(ov)
+        except Exception as exc:
+            print(f"[ovzm] note: could not transfer overlays to session viewport: {exc}",
+                  file=sys.stderr)
+    else:
+        print("[ovzm] note: overlays (tripod/labels/colorbar"
+              + ("/grain tripods" if scene.get("grains") else "")
+              + f") are not embedded in sessions on ovito {ovito.version_string}"
+              " (< 3.16.1: scene.save() corrupts the file); use 'ovzm render'"
+              " for the annotated image", file=sys.stderr)
     ovito.scene.save(str(out_path))
     prov = _provenance(card, input_path, out_path, scene)
     print(f"[ovzm] wrote session {out_path} — open it in the OVITO GUI")
