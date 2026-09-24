@@ -1,0 +1,58 @@
+# Publish ovito-auto-viz to PyPI via trusted publishing (no API token).
+#
+# Runs automatically when a GitHub release is published, or by hand:
+#   gh workflow run publish.yml --repo biterik/ovito-auto-viz --ref main -f tag=v0.4.2
+# The manual form builds the tree AT THAT TAG (needed for tags that predate
+# this file). PyPI side: a (pending) trusted publisher for project
+# ovito-auto-viz, owner biterik, repo ovito-auto-viz, workflow publish.yml,
+# environment pypi — https://pypi.org/manage/account/publishing/
+name: publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build and publish (e.g. v0.4.2)"
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build sdist + wheel
+        run: python -m pip install --upgrade pip build && python -m build
+      - name: Tag must match the package version
+        run: |
+          tag="${{ inputs.tag || github.ref_name }}"
+          ver=$(python -c 'import tomllib;print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')
+          echo "tag=$tag version=$ver"
+          test "$tag" = "v$ver"
+          ls -l dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/ovito-auto-viz/
+    permissions:
+      id-token: write   # OIDC token for PyPI trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
