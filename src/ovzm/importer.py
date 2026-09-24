@@ -103,7 +103,15 @@ def import_session(ovito_path: str) -> str:
         src = pipe.source
         files = getattr(src, "source_path", None)
         if files:
-            card["input"] = {"file": str(files)}
+            # source_path is a URL ('file:///abs/path', observed 3.15-3.16);
+            # a card's input.file is a plain path, so strip the scheme.
+            if isinstance(files, (list, tuple)):
+                files = files[0]
+            path = str(files)
+            if path.startswith("file://"):
+                from urllib.parse import unquote, urlparse
+                path = unquote(urlparse(path).path)
+            card["input"] = {"file": path}
     except Exception:
         warnings.append("could not determine the input file")
 
