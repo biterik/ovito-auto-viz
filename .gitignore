@@ -9,3 +9,5 @@ build/
 *.prov.yaml
 .pytest_cache/
 examples/try-it/*.dump
+.venvs/
+scratch/

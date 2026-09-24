@@ -6,7 +6,47 @@ design decisions and their reasons, hard-won gotchas, and the agreed roadmap.
 v0.3.1. Erik = Erik Bitzek, sole author; sessions run via Claude Cowork with
 the repo at ~/DEVEL/ovito-auto-viz on the Mac "M5".)
 
-## Start here — handoff, end of session 2026-08-05
+## Start here — handoff, end of session 2026-09-24 (v0.4.2 compat fix)
+
+**What happened:** a Cowork session verified ovzm against the current
+`ovito` module (**3.16.1**) and 3.15.5, side by side in one sandbox, and
+fixed what broke. All code changes are in the working tree, UNCOMMITTED,
+together with Erik's older uncommitted 0.4.1 edits (README/CITATION/
+pyproject). Full account: `RELEASE-NOTES-v0.4.2.md`. The autonomous
+follow-up task for Claude Code is `docs/TASK-ovito-3.16-compat.md` — read
+it and execute it if you are that session.
+
+Findings, all verified by rendering (details in the release notes):
+
+1. `color_coding` crashed on EVERY ovito version: ovzm set `mod._ovzm_*`
+   on a `ColorCodingModifier`. pybind11 objects have no `__dict__`. Fixed
+   with a side table (`pipelinebuild.set_meta/get_meta`); a source lint in
+   `tests/test_ovito_compat.py` forbids the pattern; CI now renders a
+   `color_coding` card (it never had, which is how this shipped).
+2. ovito ≥ 3.16 clips every overlay text unless a `QGuiApplication` exists
+   BEFORE the overlay is constructed (empty default font family). Now
+   `scene.ensure_gui_app()` runs first in `add_overlays`, the grid panel
+   title and `add_grain_tripods`. Any NEW overlay constructor must be
+   preceded by it.
+3. ovito ≥ 3.16 on Linux needs a Vulkan driver (`mesa-vulkan-drivers`) for
+   headless renders. README, CI, SKILL.md updated.
+4. `ovito.scene.save()` with overlays round-trips correctly on 3.16.1 (was
+   corrupt ≤ 3.15.5) — the `ovzm session` overlay skip can become
+   version-gated. Not done yet.
+5. Same `font_size` renders ~30 % smaller on 3.16 than 3.15 (OVITO change).
+   Not compensated. `font_family`/`font_style` are new overlay attributes
+   in 3.16 (`font` string deprecated) — a card option is a possible
+   follow-up.
+6. `ovzm import` emitted `input.file: file:///…`; fixed (plain path).
+7. `map: plasma` never existed in OVITO; ovzm silently rendered the default
+   gradient while prov claimed plasma. Unknown maps now abort.
+
+Version bumped to 0.4.2 in `pyproject.toml`, `src/ovzm/__init__.py`,
+`CITATION.cff`. Tests: 44 pass on 3.16.1 and on 3.15.5 in the sandbox
+(`python -m pytest tests -q` from a scratch dir). Not yet run in Erik's Mac
+conda env, not yet pushed, CI not yet observed — that is the task file's job.
+
+## Previous handoff — end of session 2026-08-05
 
 **Repo state:** `main` = `928f705` "0.3.2: ship presets and schema as package
 data…", committed AND pushed; `origin/main` matches. Working tree clean apart
@@ -159,11 +199,36 @@ view; this file is the developer/agent view.
    every YAML the tool writes gets `YAML_CREDIT_HEADER` (see
    `src/ovzm/__init__.py`). Keep both when adding files.
 
-## Gotchas verified the hard way (ovito module 3.15.5)
+## Gotchas verified the hard way (ovito module 3.15.5 and 3.16.1)
+
+- **Never set attributes on OVITO objects** (`mod._x = …`, `vp._x = …`):
+  AttributeError on every version. Use `pipelinebuild.set_meta/get_meta`.
+  Enforced by `tests/test_ovito_compat.py`.
+- **Call `scene.ensure_gui_app()` before constructing any overlay** — on
+  3.16+ an overlay created without a Qt application gets an empty font
+  family and its text is clipped. Import ovito BEFORE touching
+  `QT_QPA_PLATFORM`: 3.16 sets it to `ovitoheadless` at import; forcing
+  `offscreen` first makes Vulkan init fail ("This plugin does not support
+  createPlatformVulkanInstance"). `ensure_gui_app` uses `setdefault`, which
+  is why it is safe.
+- **Linux + ovito ≥ 3.16 needs `mesa-vulkan-drivers`** even for Tachyon
+  renders. The "VkInstanceCreateInfo … apiVersion has value of 0" line it
+  prints on stderr is OVITO's own noise, not an ovzm error.
+- 3.16.1 fixed session saving with overlays (see handoff item 4).
+- **`import ovito` on 3.12.x resets the C locale to "C"** (verified 3.12.4,
+  macOS): afterwards `read_text()`/`open()` without `encoding=` decode as
+  US-ASCII and any card with an "Å" dies with UnicodeDecodeError. Every
+  text read/write in ovzm passes `encoding="utf-8"`; a lint in
+  `tests/test_ovito_compat.py` enforces it. 3.15/3.16 leave the locale alone.
+- **ovito 3.16.1 macOS arm64 wheel is broken**: `ovito_bindings.so` links
+  `libospray.3.2.0.dylib`, the wheel ships only `libospray.3.dylib`. Symlink
+  the missing name inside `site-packages/ovito/plugins/` (done in
+  `.venvs/ov3.16.1`); documented in README (macOS) and the release notes.
 
 - `ovito.scene.save()` writes **corrupt** session files if viewport overlays
-  are in the scene → `ovzm session` deliberately skips overlays. Re-test on
-  module upgrades; consider reporting upstream (matsci.org).
+  are in the scene on ≤ 3.15.5 → `ovzm session` deliberately skips overlays.
+  Re-tested 2026-09-24: OK on 3.16.1 (their changelog: "fixed a crash of
+  Scene.save() … default-constructed font").
 - Naming a ParticleType (e.g. "Ni") RESETS its color/radius to element
   defaults → set names BEFORE card colors/radii (`style_atoms`).
 - OVITO expression language: no leading `!(...)`; use `(expr) == 0`.
