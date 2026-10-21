@@ -7,11 +7,11 @@
     "prs_merged_30d": 0,
     "prs_opened_30d": 0
   },
-  "collected_at": "2026-10-20T08:28:20Z",
-  "date": "2026-10-20",
+  "collected_at": "2026-10-21T08:31:08Z",
+  "date": "2026-10-21",
   "derived": {
-    "clones_last_30d": 322,
-    "clones_last_7d": 50,
+    "clones_last_30d": 320,
+    "clones_last_7d": 53,
     "downloads_gained_30d": 0,
     "downloads_total": 0,
     "funnel_30d": {
@@ -20,14 +20,14 @@
       "unique_cloners": 201,
       "unique_visitors": 13
     },
-    "history_days": 91,
+    "history_days": 92,
     "per_30d": {
-      "clones": 218.2,
+      "clones": 219.5,
       "downloads_gained": 0.0,
       "stars_gained": 0.0,
-      "unique_cloners": 144.1,
-      "unique_visitors": 10.5,
-      "views": 21.1
+      "unique_cloners": 145.4,
+      "unique_visitors": 10.4,
+      "views": 20.9
     },
     "repo_created_at": "2026-08-04T17:49:20Z",
     "star_forecast": {
@@ -40,35 +40,35 @@
     "stars_gained_7d": 0,
     "stars_now": 0,
     "totals": {
-      "clones": 662,
+      "clones": 673,
       "downloads_gained": 0,
       "stars_gained": 0,
-      "unique_cloners": 437,
+      "unique_cloners": 446,
       "unique_visitors": 32,
       "views": 64
     },
-    "tracking_days": 91,
+    "tracking_days": 92,
     "tracking_since": "2026-07-22",
     "views_last_30d": 15,
     "views_last_7d": 0,
     "views_prev_7d": 0,
     "windows": {
       "30d": {
-        "clones": 322,
+        "clones": 320,
         "downloads_gained": 0,
         "stars_gained": 0,
         "unique_visitors": 13,
         "views": 15
       },
       "365d": {
-        "clones": 662,
+        "clones": 673,
         "downloads_gained": 0,
         "stars_gained": 0,
         "unique_visitors": 32,
         "views": 64
       },
       "90d": {
-        "clones": 662,
+        "clones": 673,
         "downloads_gained": 0,
         "stars_gained": 0,
         "unique_visitors": 32,
@@ -83,8 +83,8 @@
     "default_branch": "main",
     "fork": false,
     "open_issues": 0,
-    "pushed_at": "2026-10-19T08:48:10Z",
-    "size_kb": 6538
+    "pushed_at": "2026-10-20T08:28:23Z",
+    "size_kb": 6539
   },
   "popularity": {
     "forks": 0,
@@ -119,10 +119,6 @@
   "schema_version": 1,
   "traffic": {
     "clones": {
-      "2026-10-06": {
-        "count": 2,
-        "uniques": 2
-      },
       "2026-10-07": {
         "count": 1,
         "uniques": 1
@@ -174,37 +170,15 @@
       "2026-10-19": {
         "count": 21,
         "uniques": 15
+      },
+      "2026-10-20": {
+        "count": 11,
+        "uniques": 9
       }
     },
-    "paths": [
-      {
-        "count": 3,
-        "path": "/biterik/ovito-auto-viz",
-        "uniques": 2
-      },
-      {
-        "count": 1,
-        "path": "/biterik/ovito-auto-viz/blob/main/CLAUDE.md",
-        "uniques": 1
-      }
-    ],
-    "referrers": [
-      {
-        "count": 2,
-        "referrer": "github.com",
-        "uniques": 1
-      },
-      {
-        "count": 1,
-        "referrer": "Bing",
-        "uniques": 1
-      }
-    ],
+    "paths": [],
+    "referrers": [],
     "views": {
-      "2026-10-06": {
-        "count": 4,
-        "uniques": 2
-      },
       "2026-10-07": {
         "count": 0,
         "uniques": 0
@@ -254,6 +228,10 @@
         "uniques": 0
       },
       "2026-10-19": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-10-20": {
         "count": 0,
         "uniques": 0
       }
