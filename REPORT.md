@@ -1,12 +1,12 @@
 # biterik/ovito-auto-viz — repo vitals
 
 ![stars](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbiterik%2Fovito-auto-viz%2Fvitals%2Fbadge%2Fstars.json) ![views/week](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbiterik%2Fovito-auto-viz%2Fvitals%2Fbadge%2Fviews-week.json) 
-_Updated 2026-10-28T09:36:09Z (UTC) · machine-readable: [VITALS.json](VITALS.json) · full history: [history.ndjson](history.ndjson) · daily snapshots: [snapshots/](snapshots/)_
+_Updated 2026-10-29T09:54:10Z (UTC) · machine-readable: [VITALS.json](VITALS.json) · full history: [history.ndjson](history.ndjson) · daily snapshots: [snapshots/](snapshots/)_
 
 | | |
 |---|---|
 | Repository created | 2026-08-04 |
-| Tracked by repo-vitals since | 2026-07-22 (99 days)³ |
+| Tracked by repo-vitals since | 2026-07-22 (100 days)³ |
 
 
 ## Summary
@@ -15,7 +15,7 @@ _Updated 2026-10-28T09:36:09Z (UTC) · machine-readable: [VITALS.json](VITALS.js
 |---|---:|---:|---:|
 | Views | 4 | 64 | 64 |
 | Unique visitors¹ | 2 | 32 | 32 |
-| Clones | 232 | 713 | 713 |
+| Clones | 228 | 721 | 721 |
 | Stars gained | 0 | 0 | 0 |
 | Release downloads gained | 0 | 0 | 0 |
 
@@ -23,14 +23,14 @@ _Updated 2026-10-28T09:36:09Z (UTC) · machine-readable: [VITALS.json](VITALS.js
 
 ## Since tracking began
 
-Everything recorded so far, from 2026-07-22 (99 days) — the total, and the same total expressed as an average rate.
+Everything recorded so far, from 2026-07-22 (100 days) — the total, and the same total expressed as an average rate.
 
 | Metric | Total | Average / 30 d |
 |---|---:|---:|
-| Views | 64 | 19.4 |
-| Unique visitors¹ | 32 | 9.7 |
-| Clones | 713 | 216.1 |
-| Unique cloners¹ | 474 | 143.6 |
+| Views | 64 | 19.2 |
+| Unique visitors¹ | 32 | 9.6 |
+| Clones | 721 | 216.3 |
+| Unique cloners¹ | 478 | 143.4 |
 | Stars gained | 0 | 0.0 |
 | Release downloads gained | 0 | 0.0 |
 
@@ -39,14 +39,14 @@ Averages are the total divided by days tracked, times 30 — not a projection.
 ## Trends — last 30 days
 
 ```
-views  ▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁·  (4 total)
-clones ▄▁▆▂▄▇▃▁▁▁▅▄▂▁█▃▁▅▂▁▇▄▄▂▁▂▁▆▂·  (232 total)
+views  ▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁·  (4 total)
+clones ▁▆▂▄▇▃▁▁▁▅▄▂▁█▃▁▅▂▁▇▄▄▂▁▂▁▆▂▃·  (228 total)
 ```
 
 ('·' = day without data)
 
 Stars: **0** (+0 in 30 d, +0 in 7 d)
-**Conversion funnel (30 d):** 2 unique visitors → 162 unique cloners → 0 stars gained → 0 downloads gained
+**Conversion funnel (30 d):** 2 unique visitors → 159 unique cloners → 0 stars gained → 0 downloads gained
 
 
 ## Releases
@@ -81,7 +81,7 @@ Interactive dashboard: [index.html](index.html) on this branch (raw URLs don't
 render HTML — view it via GitHub Pages on the vitals branch, the repo-vitals
 hub, or locally: `git clone -b vitals … && python -m http.server`).
 A copy of this report named with the repo and today's date lives at
-[reports/biterik-ovito-auto-viz-2026-10-28.md](reports/biterik-ovito-auto-viz-2026-10-28.md)
+[reports/biterik-ovito-auto-viz-2026-10-29.md](reports/biterik-ovito-auto-viz-2026-10-29.md)
 — safe to download standalone.
 
 <sub>[repo-vitals](https://github.com/biterik/repo-vitals) by Erik Bitzek —
