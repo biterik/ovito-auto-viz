@@ -7,10 +7,10 @@
     "prs_merged_30d": 0,
     "prs_opened_30d": 0
   },
-  "collected_at": "2026-11-03T10:47:42Z",
-  "date": "2026-11-03",
+  "collected_at": "2026-11-04T10:51:17Z",
+  "date": "2026-11-04",
   "derived": {
-    "clones_last_30d": 217,
+    "clones_last_30d": 218,
     "clones_last_7d": 52,
     "downloads_gained_30d": 0,
     "downloads_total": 0,
@@ -18,16 +18,16 @@
       "downloads_gained": 0,
       "stars_gained": 0,
       "unique_cloners": 147,
-      "unique_visitors": 2
+      "unique_visitors": 3
     },
-    "history_days": 105,
+    "history_days": 106,
     "per_30d": {
-      "clones": 218.6,
+      "clones": 218.8,
       "downloads_gained": 0.0,
       "stars_gained": 0.0,
-      "unique_cloners": 144.0,
-      "unique_visitors": 9.1,
-      "views": 18.3
+      "unique_cloners": 143.8,
+      "unique_visitors": 9.3,
+      "views": 18.4
     },
     "repo_created_at": "2026-08-04T17:49:20Z",
     "star_forecast": {
@@ -40,39 +40,39 @@
     "stars_gained_7d": 0,
     "stars_now": 0,
     "totals": {
-      "clones": 765,
+      "clones": 773,
       "downloads_gained": 0,
       "stars_gained": 0,
-      "unique_cloners": 504,
-      "unique_visitors": 32,
-      "views": 64
+      "unique_cloners": 508,
+      "unique_visitors": 33,
+      "views": 65
     },
-    "tracking_days": 105,
+    "tracking_days": 106,
     "tracking_since": "2026-07-22",
-    "views_last_30d": 4,
-    "views_last_7d": 0,
+    "views_last_30d": 5,
+    "views_last_7d": 1,
     "views_prev_7d": 0,
     "windows": {
       "30d": {
-        "clones": 217,
+        "clones": 218,
         "downloads_gained": 0,
         "stars_gained": 0,
-        "unique_visitors": 2,
-        "views": 4
+        "unique_visitors": 3,
+        "views": 5
       },
       "365d": {
-        "clones": 765,
+        "clones": 773,
         "downloads_gained": 0,
         "stars_gained": 0,
-        "unique_visitors": 32,
-        "views": 64
+        "unique_visitors": 33,
+        "views": 65
       },
       "90d": {
-        "clones": 664,
+        "clones": 667,
         "downloads_gained": 0,
         "stars_gained": 0,
-        "unique_visitors": 29,
-        "views": 53
+        "unique_visitors": 18,
+        "views": 20
       }
     }
   },
@@ -83,8 +83,8 @@
     "default_branch": "main",
     "fork": false,
     "open_issues": 0,
-    "pushed_at": "2026-11-02T10:58:26Z",
-    "size_kb": 6538
+    "pushed_at": "2026-11-03T10:47:46Z",
+    "size_kb": 6539
   },
   "popularity": {
     "forks": 0,
@@ -119,10 +119,6 @@
   "schema_version": 1,
   "traffic": {
     "clones": {
-      "2026-10-20": {
-        "count": 11,
-        "uniques": 9
-      },
       "2026-10-21": {
         "count": 10,
         "uniques": 6
@@ -174,15 +170,27 @@
       "2026-11-02": {
         "count": 12,
         "uniques": 8
+      },
+      "2026-11-03": {
+        "count": 8,
+        "uniques": 4
       }
     },
-    "paths": [],
-    "referrers": [],
+    "paths": [
+      {
+        "count": 1,
+        "path": "/biterik/ovito-auto-viz",
+        "uniques": 1
+      }
+    ],
+    "referrers": [
+      {
+        "count": 1,
+        "referrer": "github.com",
+        "uniques": 1
+      }
+    ],
     "views": {
-      "2026-10-20": {
-        "count": 0,
-        "uniques": 0
-      },
       "2026-10-21": {
         "count": 0,
         "uniques": 0
@@ -234,6 +242,10 @@
       "2026-11-02": {
         "count": 0,
         "uniques": 0
+      },
+      "2026-11-03": {
+        "count": 1,
+        "uniques": 1
       }
     }
   }
