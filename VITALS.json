@@ -7,11 +7,11 @@
     "prs_merged_30d": 0,
     "prs_opened_30d": 0
   },
-  "collected_at": "2026-11-05T10:49:03Z",
-  "date": "2026-11-05",
+  "collected_at": "2026-11-06T10:48:39Z",
+  "date": "2026-11-06",
   "derived": {
     "clones_last_30d": 218,
-    "clones_last_7d": 53,
+    "clones_last_7d": 34,
     "downloads_gained_30d": 0,
     "downloads_total": 0,
     "funnel_30d": {
@@ -20,14 +20,14 @@
       "unique_cloners": 147,
       "unique_visitors": 1
     },
-    "history_days": 107,
+    "history_days": 108,
     "per_30d": {
-      "clones": 217.3,
+      "clones": 215.6,
       "downloads_gained": 0.0,
       "stars_gained": 0.0,
-      "unique_cloners": 143.0,
-      "unique_visitors": 9.3,
-      "views": 18.2
+      "unique_cloners": 141.9,
+      "unique_visitors": 9.2,
+      "views": 18.1
     },
     "repo_created_at": "2026-08-04T17:49:20Z",
     "star_forecast": {
@@ -40,14 +40,14 @@
     "stars_gained_7d": 0,
     "stars_now": 0,
     "totals": {
-      "clones": 775,
+      "clones": 776,
       "downloads_gained": 0,
       "stars_gained": 0,
-      "unique_cloners": 510,
+      "unique_cloners": 511,
       "unique_visitors": 33,
       "views": 65
     },
-    "tracking_days": 107,
+    "tracking_days": 108,
     "tracking_since": "2026-07-22",
     "views_last_30d": 1,
     "views_last_7d": 1,
@@ -61,14 +61,14 @@
         "views": 1
       },
       "365d": {
-        "clones": 775,
+        "clones": 776,
         "downloads_gained": 0,
         "stars_gained": 0,
         "unique_visitors": 33,
         "views": 65
       },
       "90d": {
-        "clones": 656,
+        "clones": 646,
         "downloads_gained": 0,
         "stars_gained": 0,
         "unique_visitors": 18,
@@ -83,8 +83,8 @@
     "default_branch": "main",
     "fork": false,
     "open_issues": 0,
-    "pushed_at": "2026-11-04T10:51:26Z",
-    "size_kb": 6540
+    "pushed_at": "2026-11-05T10:49:06Z",
+    "size_kb": 6542
   },
   "popularity": {
     "forks": 0,
@@ -119,10 +119,6 @@
   "schema_version": 1,
   "traffic": {
     "clones": {
-      "2026-10-22": {
-        "count": 4,
-        "uniques": 3
-      },
       "2026-10-23": {
         "count": 2,
         "uniques": 2
@@ -174,6 +170,10 @@
       "2026-11-04": {
         "count": 2,
         "uniques": 2
+      },
+      "2026-11-05": {
+        "count": 1,
+        "uniques": 1
       }
     },
     "paths": [
@@ -191,10 +191,6 @@
       }
     ],
     "views": {
-      "2026-10-22": {
-        "count": 0,
-        "uniques": 0
-      },
       "2026-10-23": {
         "count": 0,
         "uniques": 0
@@ -244,6 +240,10 @@
         "uniques": 1
       },
       "2026-11-04": {
+        "count": 0,
+        "uniques": 0
+      },
+      "2026-11-05": {
         "count": 0,
         "uniques": 0
       }
