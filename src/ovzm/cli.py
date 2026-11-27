@@ -78,6 +78,9 @@ def main(argv=None):
         try:
             card = load_card(args.card)
             resolve_grains(card)  # semantic checks the schema cannot express
+            from .card import semantic_problems
+            for w in semantic_problems(card)[1]:
+                print(f"[ovzm] warning: {w}", file=sys.stderr)
         except SchemaUnavailableError as exc:
             print(f"[ovzm] {exc}", file=sys.stderr)
             return 1

@@ -125,7 +125,7 @@
           "default": "ortho"
         },
         "zoom": {
-          "description": "'fit' (default) or a magnification factor relative to fit.",
+          "description": "'fit' (default) or a magnification factor relative to fit. Ignored when view.fov is given.",
           "anyOf": [
             {
               "const": "fit"
@@ -158,6 +158,11 @@
           "minItems": 3,
           "maxItems": 3,
           "description": "World-space point (\u00c5, sim frame) to center the view on; combine with zoom for close-ups."
+        },
+        "fov": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Absolute field of view: half-height of the visible area in \u00c5 (orthographic views only; OVITO's own Viewport.fov convention). Overrides fit, fit_margin and zoom, so the same card always shows the same region -- use it whenever a figure must match a scale (published figure, comparison grid, series of snapshots). In `ovzm grid` every panel gets this one field of view."
         }
       }
     },
@@ -214,7 +219,7 @@
         },
         "structure_colors": {
           "type": "object",
-          "description": "Map of structure name (other, fcc, hcp, bcc, ico, cubic_diamond, hexagonal_diamond) -> RGB in [0,1]; applies when color_by is 'structure'. Types listed in atoms.colors keep their per-type color (pinned) even in structure mode.",
+          "description": "Map of structure name (other, fcc, hcp, bcc, ico, sc, cubic_diamond, hexagonal_diamond, graphene) -> RGB in [0,1]; applies when color_by is 'structure'. Types listed in atoms.colors keep their per-type color (pinned) even in structure mode.",
           "additionalProperties": {
             "type": "array",
             "items": {
@@ -224,6 +229,19 @@
             },
             "minItems": 3,
             "maxItems": 3
+          },
+          "propertyNames": {
+            "enum": [
+              "other",
+              "fcc",
+              "hcp",
+              "bcc",
+              "ico",
+              "sc",
+              "cubic_diamond",
+              "hexagonal_diamond",
+              "graphene"
+            ]
           }
         }
       }
@@ -253,6 +271,24 @@
                   },
                   "orientations": {
                     "type": "boolean"
+                  },
+                  "structures": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "fcc",
+                        "hcp",
+                        "bcc",
+                        "ico",
+                        "sc",
+                        "cubic_diamond",
+                        "hexagonal_diamond",
+                        "graphene"
+                      ]
+                    },
+                    "description": "PTM templates to ENABLE in addition to OVITO's defaults (fcc, hcp, bcc). ico (icosahedral), sc, cubic_diamond, hexagonal_diamond and graphene are off by default. If dxa runs after ptm, dxa overwrites 'Structure Type': put dxa first when PTM-only types must show (ovzm refuses the card otherwise)."
                   }
                 },
                 "additionalProperties": false
@@ -475,6 +511,15 @@
         "defect_mesh": {
           "type": "boolean",
           "description": "Render DXA's translucent defect/interface mesh (default true). Set false for clean line-and-atoms figures."
+        },
+        "tripod_font_size": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Tripod label size relative to the tripod size (OVITO's CoordinateTripodOverlay.font_size; OVITO default 0.4). Setting it also switches on a white label outline (see tripod_outline)."
+        },
+        "tripod_outline": {
+          "type": "boolean",
+          "description": "White outline around the tripod labels for readability over atoms. Default: on when tripod_font_size is set, off otherwise."
         }
       }
     },

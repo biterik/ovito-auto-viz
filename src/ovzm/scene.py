@@ -115,6 +115,21 @@ def resolve_view(card: dict, orientation: Orientation | None):
     return cam_dir, up_vec, projection
 
 
+def apply_view_fov(vp: Viewport, card: dict) -> bool:
+    """view.fov: set the ABSOLUTE orthographic field of view (half-height of
+    the visible area in Angstrom, OVITO's own `Viewport.fov` convention for
+    ortho views). Overrides fit / fit_margin / zoom. Returns True if applied.
+    The card validator already refuses view.fov with a perspective camera."""
+    fov = (card.get("view") or {}).get("fov")
+    if fov is None:
+        return False
+    if vp.type != Viewport.Type.Ortho:
+        raise SystemExit("[ovzm] view.fov needs projection: ortho "
+                         "(it is a half-height in Angstrom)")
+    vp.fov = float(fov)
+    return True
+
+
 def make_viewport(card: dict, orientation: Orientation | None) -> Viewport:
     cam_dir, up_vec, projection = resolve_view(card, orientation)
     vp = Viewport()
@@ -194,6 +209,16 @@ def add_overlays(vp: Viewport, card: dict, pipe, data, orientation, label_text):
         tripod.style = CoordinateTripodOverlay.Style.Solid
         tripod.offset_x = 0.06   # keep Miller labels inside the frame
         tripod.offset_y = 0.05
+        # annotate.tripod_font_size: label size in OVITO's unit (relative to
+        # the tripod size; OVITO default 0.4). A white outline keeps the
+        # labels readable over atoms; on by default whenever the size is
+        # set, switchable with annotate.tripod_outline.
+        if ann.get("tripod_font_size") is not None:
+            tripod.font_size = float(ann["tripod_font_size"])
+        if ann.get("tripod_outline",
+                   ann.get("tripod_font_size") is not None):
+            tripod.outline_enabled = True
+            tripod.outline_color = (1.0, 1.0, 1.0)
         if tripod_cfg == "miller" and orientation is not None:
             lx, ly, lz = orientation.axis_labels()
             tripod.axis1_label = f"x={lx}"

@@ -22,15 +22,15 @@ import yaml
 
 import ovito
 
-from .card import load_card
+from .card import card_warnings, load_card
 from .crystal import resolve_orientation
 from .grains import finalize_grains, grains_prov, resolve_grains
 from .labels import build_label_text, dxa_summary
 from .pipelinebuild import (apply_color_mode, build_pipeline,
                             check_species_names, resolve_auto_color_ranges,
                             style_atoms, style_structure_types)
-from .scene import (add_grain_tripods, add_overlays, make_renderer,
-                    make_viewport, resolve_output)
+from .scene import (add_grain_tripods, add_overlays, apply_view_fov,
+                    make_renderer, make_viewport, resolve_output)
 
 
 def _resolve_input(card: dict) -> str:
@@ -120,12 +120,18 @@ def _resolved_scene(pipe, vp, card, colorbars, dxa, full_data, orientation,
         "direction_sim_frame": [round(float(x), 6) for x in vp.camera_dir],
         "projection": "ortho" if vp.type == type(vp).Type.Ortho else "perspective",
         "fov": float(vp.fov),
+        "fov_source": ("view.fov (absolute half-height, A)"
+                       if (card.get("view") or {}).get("fov") is not None
+                       else "fit (zoom_all x fit_margin / zoom)"),
     }
     if orientation is not None:
         lx, ly, lz = orientation.axis_labels()
         scene["crystal_axes"] = {"x": lx, "y": ly, "z": lz}
     if grains is not None:
         scene["grains"] = grains_prov(grains)
+    warns = card_warnings(card, orientation)
+    if warns:
+        scene["warnings"] = warns
     from .labels import composition_summary
     comp = composition_summary(full_data) if full_data is not None else {}
     if comp:
@@ -340,6 +346,8 @@ def _prepare(card_path: str, *, ask: bool = False):
     resolve_meta(card, ask=ask,
                  search_dirs=(card.get("_card_dir"), str(Path(first).parent)))
     orientation = resolve_orientation(card, first)
+    for w in card_warnings(card, orientation):
+        print(f"[ovzm] warning: {w}", file=sys.stderr)
     grains = resolve_grains(card)          # hard error on a malformed block
     pipe = build_pipeline(card, input_path)
     if ask:
@@ -380,6 +388,11 @@ def _prepare(card_path: str, *, ask: bool = False):
     zoom = (card.get("view") or {}).get("zoom", "fit")
     if isinstance(zoom, (int, float)):
         vp.fov = vp.fov / float(zoom)
+    # view.fov: ABSOLUTE field of view (orthographic half-height, A). It
+    # overrides fit / fit_margin / zoom, which depend on zoom_all() and were
+    # not reproducible between renders of the same card (43 vs 95 A seen on
+    # 2026-11-21). Needed whenever a figure must match a scale.
+    apply_view_fov(vp, card)
     center = (card.get("view") or {}).get("center")
     if center is not None:
         # re-aim the camera at a world-space point (Å, sim frame), keeping

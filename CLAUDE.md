@@ -6,6 +6,18 @@ design decisions and their reasons, hard-won gotchas, and the agreed roadmap.
 v0.3.1. Erik = Erik Bitzek, sole author; sessions run via Claude Cowork with
 the repo at ~/DEVEL/ovito-auto-viz on the Mac "M5".)
 
+## Start here — handoff, end of session 2026-11-27 (v0.4.3)
+
+0.4.3 implemented in a Claude chat session (LLM-LAMMPS designer conversation),
+coded and tested in the cloud sandbox with ovito 3.17.2 (67 tests green, incl.
+real renders), files written back to the M5 working tree. New keys
+`ptm.structures`, `view.fov`, `annotate.tripod_font_size`/`tripod_outline`;
+PTM-before-DXA conflict refused; dxa-without-crystal warning; uniform
+`atoms.radius` fix. Full account: `RELEASE-NOTES-v0.4.3.md`. Release = Erik
+commits, tags `v0.4.3`, creates the GitHub release -> publish.yml pushes to
+PyPI. Open: tripod font DEFAULT (0.4) unchanged on purpose; macOS (3.15.5)
+not re-tested for 0.4.3 -- CI covers Linux.
+
 ## Start here — handoff, end of session 2026-09-24 (v0.4.2 compat fix)
 
 **What happened:** a Cowork session verified ovzm against the current

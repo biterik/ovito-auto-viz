@@ -317,7 +317,9 @@ magnification, styling, and colorbar limits** across panels — the manual-GUI
 failure mode this tool exists to kill. Tripod and legend are drawn once
 (first panel; `grid.tripod: all` for every panel); each panel carries only
 its title, and the per-panel analysis results (composition, DXA, …) live in
-the grid's provenance under `panels:`.
+the grid's provenance under `panels:`. By default the shared camera fits the
+largest panel; `view.fov` instead fixes one absolute field of view (Å) for
+every panel.
 
 ## Per-grain tripods (bicrystals, polycrystals)
 
@@ -436,6 +438,23 @@ Output quality presets: `draft` (1280×720, fast), `slide` (1920×1080),
 `atoms.structure_colors` (e.g. bcc dark gray, defective atoms white) while
 types listed in `atoms.colors` stay pinned to their species color — that is
 how the hero shows a structure-colored W matrix with orange P solutes.
+
+PTM's extra templates — icosahedral, simple cubic, both diamonds, graphene —
+are off in OVITO by default; switch them on with
+`pipeline: [{ptm: {structures: [ico]}}]` (fcc/hcp/bcc stay on). Mind the
+order: **DXA overwrites "Structure Type"** with its own classification, so
+with `dxa` after `ptm` (the `dxa-standard` order) a PTM-only type such as
+`ico` can never show. Put `dxa` first in that case — the dislocation lines do
+not depend on the order; `ovzm validate` refuses the other order with that
+advice.
+
+**Fixed scale:** `view.fov` sets the field of view absolutely (half-height of
+an orthographic view in Å, OVITO's own convention) and overrides
+`fit`/`fit_margin`/`zoom`, which follow the bounding box and need not repeat
+between renders. Use it whenever a figure must match a scale — a published
+figure, a series of snapshots, a grid. **Readable tripods:**
+`annotate.tripod_font_size` (relative to the tripod size, OVITO default 0.4)
+plus a white outline (`annotate.tripod_outline`).
 
 ## Multimillion-atom workflow
 

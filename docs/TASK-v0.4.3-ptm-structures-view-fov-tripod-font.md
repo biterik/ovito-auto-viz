@@ -1,7 +1,14 @@
 # TASK: upstream three local patches + one ordering fix (target v0.4.3)
 
 Written 2026-11-27 by the LLM-LAMMPS designer session 2026-11-27-1600-designer-inbox-and-tool-cards, from the
-LLM-LAMMPS inbox entry of 2026-11-21 (pilot 2026-11-21-1625-turlo-status-readout). Not yet started.
+LLM-LAMMPS inbox entry of 2026-11-21 (pilot 2026-11-21-1625-turlo-status-readout).
+
+**Status: DONE 2026-11-27 in 0.4.3** -- see RELEASE-NOTES-v0.4.3.md. Decisions taken: `ptm.structures` is
+additive; `view.fov` refused with perspective; the tripod outline is on by default once a font size is set;
+the tripod font DEFAULT stays 0.4 (changing it would alter every existing figure -- revisit with Erik);
+the PTM/DXA ordering conflict is a hard validation error (fail loudly, like unknown colour maps in 0.4.2),
+not a silent reorder; dxa without a crystal frame is a warning. Found on the way and fixed: a uniform
+`atoms.radius` was ignored for named types.
 
 ## Where it came from
 

@@ -37,6 +37,17 @@ LATTICES = {
 STRUCTURE_IDS = {  # PTM/CNA StructureType integer ids share this layout
     "other": 0, "fcc": 1, "hcp": 2, "bcc": 3, "ico": 4,
 }
+# NB: DXA numbers its OWN structure types differently from id 4 on
+# (DXA: 4 = cubic diamond, 5 = hexagonal diamond; PTM: 4 = ico, 5 = sc, ...).
+# Whichever structure-identifying modifier runs LAST owns "Structure Type".
+
+#: card ptm.structures name -> PolyhedralTemplateMatchingModifier.Type member.
+#: fcc/hcp/bcc are enabled by OVITO by default; the others are off.
+PTM_TEMPLATES = {
+    "fcc": "FCC", "hcp": "HCP", "bcc": "BCC", "ico": "ICO", "sc": "SC",
+    "cubic_diamond": "CUBIC_DIAMOND", "hexagonal_diamond": "HEX_DIAMOND",
+    "graphene": "GRAPHENE",
+}
 
 #: card `map:` key -> ColorCodingModifier gradient class. These are the
 #: gradients the ovito module actually ships (verified 3.12 .. 3.16); a raw
@@ -140,6 +151,19 @@ def build_modifier(step: dict):
         m = PolyhedralTemplateMatchingModifier(
             rmsd_cutoff=float(p.get("rmsd_cutoff", 0.1)))
         m.output_orientation = bool(p.get("orientations", False))
+        # ptm.structures: extra templates to ENABLE (additive; the OVITO
+        # defaults fcc/hcp/bcc stay on). Icosahedral, simple cubic, the two
+        # diamonds and graphene are off by default and had no card key
+        # before 0.4.3.
+        for sname in p.get("structures", []) or []:
+            key = str(sname).lower()
+            if key not in PTM_TEMPLATES:
+                raise SystemExit(
+                    f"[ovzm] unknown ptm.structures entry '{sname}'; "
+                    f"use one of {sorted(PTM_TEMPLATES)}")
+            ptype = getattr(PolyhedralTemplateMatchingModifier.Type,
+                            PTM_TEMPLATES[key])
+            m.structures[ptype].enabled = True
         return [m]
     if name == "cna":
         m = CommonNeighborAnalysisModifier()
@@ -300,8 +324,10 @@ _STRUCTURE_KEYS = {
     "hcp": "HCP",
     "bcc": "BCC",
     "ico": "ICO",
+    "sc": "Simple cubic",
     "cubic_diamond": "Cubic diamond",
     "hexagonal_diamond": "Hexagonal diamond",
+    "graphene": "Graphene",
 }
 
 
@@ -366,6 +392,12 @@ def style_atoms(pipe, data, card: dict):
         for key, n in names.items():
             if str(key) == str(t.id):
                 tm.name = str(n)
+        if isinstance(radius, (int, float)):
+            # a uniform radius must also go on every TYPE: naming a type
+            # (above) gives it the element's own radius, and a per-type
+            # radius beats vis.radius -- before 0.4.3 `radius: 0.4` with
+            # `names: {1: Ni}` silently rendered Ni at 1.24 A.
+            tm.radius = float(radius)
         if isinstance(radius, dict):
             for key, r in radius.items():
                 if str(key) == str(t.id) or key == t.name:

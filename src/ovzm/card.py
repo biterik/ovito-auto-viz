@@ -132,6 +132,89 @@ def validate(card: dict) -> list[str]:
     return problems
 
 
+#: structure types DXA itself can report (it overwrites "Structure Type" with
+#: its own classification). Anything else exists only in PTM/CNA output.
+DXA_STRUCTURES = {"other", "fcc", "hcp", "bcc", "cubic_diamond",
+                  "hexagonal_diamond"}
+
+
+def _step_name_params(step):
+    if isinstance(step, str):
+        return step, {}
+    (name, params), = step.items()
+    return name, (params or {})
+
+
+def semantic_problems(card: dict) -> tuple[list[str], list[str]]:
+    """Checks the JSON schema cannot express. Returns (errors, warnings).
+
+    Errors: the card asks for something the pipeline cannot deliver, so the
+    figure would be silently wrong. Warnings: the figure is valid but lacks
+    something Erik's figure rules expect (crystallography of dislocations).
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+    steps = [_step_name_params(s) for s in (card.get("pipeline") or [])]
+    names = [n for n, _ in steps]
+
+    # (1) PTM/CNA before DXA: DXA runs last and overwrites "Structure Type"
+    # with its own classification, so PTM-only types (ico, sc, graphene)
+    # never reach the image -- their structure_colors silently do nothing.
+    ident = [i for i, n in enumerate(names) if n in ("ptm", "cna", "dxa")]
+    if ident and names[ident[-1]] == "dxa":
+        earlier = [i for i in ident[:-1] if names[i] in ("ptm", "cna")]
+        if earlier:
+            wanted = {str(k).lower() for k in
+                      ((card.get("atoms") or {}).get("structure_colors") or {})}
+            for i in earlier:
+                if names[i] == "ptm":
+                    wanted |= {str(x).lower() for x in
+                               (steps[i][1].get("structures") or [])}
+            lost = sorted(wanted - DXA_STRUCTURES)
+            if lost:
+                errors.append(
+                    f"pipeline: {names[earlier[-1]]} runs before dxa, and dxa "
+                    "overwrites 'Structure Type' with its own classification, "
+                    f"so the requested type(s) {lost} can never appear in the "
+                    "image. Put dxa FIRST, e.g. pipeline: [{dxa: {lattice: "
+                    "fcc}}, {ptm: {structures: [ico]}}] -- the dislocation "
+                    "lines are unaffected by the order.")
+
+    # (2) view.fov is an orthographic half-height in Angstrom
+    view = card.get("view") or {}
+    if view.get("fov") is not None and view.get("projection", "ortho") != "ortho":
+        errors.append("view.fov is the half-height of an ORTHOGRAPHIC view "
+                      "in Angstrom; it cannot be used with projection: "
+                      "perspective (use zoom there).")
+
+    # (3) dislocation figure without a crystal frame
+    if "dxa" in names and not (card.get("crystal") or {}):
+        warnings.append(
+            "pipeline contains dxa but the card has no crystal: block -- the "
+            "Miller tripod, line directions xi and Burgers vectors b cannot be "
+            "given in the crystal frame. Add crystal: {x: [..], y: [..], "
+            "z: [..], lattice: fcc} (or x: auto for x-101_y1-21_z111 file "
+            "names). Note: OVITO's DXA uses the LH/SF (left-hand "
+            "start-finish) convention; b flips sign with xi.")
+    return errors, warnings
+
+
+def card_warnings(card: dict, orientation=None) -> list[str]:
+    """Static warnings plus the run-time one: a dxa figure whose crystal
+    frame could not be resolved (e.g. crystal: {x: auto} and a file name
+    without the x-101_y1-21_z111 convention)."""
+    _, warnings = semantic_problems(card)
+    names = [_step_name_params(s)[0] for s in (card.get("pipeline") or [])]
+    if "dxa" in names and (card.get("crystal") or {}) and orientation is None:
+        warnings.append(
+            "pipeline contains dxa but the crystal orientation could not be "
+            "resolved (crystal: x: auto needs a file name like "
+            "..._x-101_y1-21_z111...): tripod, xi and b are labelled in the "
+            "SIMULATION frame, not with Miller indices. Give crystal: "
+            "{x: [..], y: [..], z: [..]} explicitly.")
+    return warnings
+
+
 def load_card(path: str | Path, *, do_validate: bool = True) -> dict:
     """Load a viz card, resolving the `extends:` chain (deepest ancestor first)."""
     path = Path(path)
@@ -154,6 +237,9 @@ def load_card(path: str | Path, *, do_validate: bool = True) -> dict:
     merged.setdefault("_card_dir", str(path.resolve().parent))
     if do_validate:
         problems = validate({k: v for k, v in merged.items() if not k.startswith("_")})
+        if not problems:
+            sem_err, _ = semantic_problems(merged)
+            problems = sem_err
         if problems:
             msg = "\n  ".join(problems)
             raise ValueError(f"viz card failed validation:\n  {msg}")

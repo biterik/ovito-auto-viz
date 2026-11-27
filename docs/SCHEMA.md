@@ -20,17 +20,18 @@ run `python tools/gen-schema-md.py` after changing the schema.
 | `view.direction` | `top` | `bottom` | `front` | `back` | `left` | `right` or miller | Named view (sim frame) or Miller direction (crystal frame; camera looks at the structure from that side). |
 | `view.up` | miller | Optional up direction (crystal frame for Miller views). |
 | `view.projection` | `ortho` | `perspective` |  |
-| `view.zoom` | `fit` or number | 'fit' (default) or a magnification factor relative to fit. |
+| `view.zoom` | `fit` or number | 'fit' (default) or a magnification factor relative to fit. Ignored when view.fov is given. |
 | `view.direction_sim_frame` | array of number | Raw sim-frame camera direction (written by `ovzm import`). |
 | `view.fit_margin` | number | Enlarge the field of view beyond tight fit so overlays (tripod, labels, colorbar) land outside the projected cell. Default 1.15. |
 | `view.center` | array of number | World-space point (Å, sim frame) to center the view on; combine with zoom for close-ups. |
+| `view.fov` | number | Absolute field of view: half-height of the visible area in Å (orthographic views only; OVITO's own Viewport.fov convention). Overrides fit, fit_margin and zoom, so the same card always shows the same region -- use it whenever a figure must match a scale (published figure, comparison grid, series of snapshots). In `ovzm grid` every panel gets this one field of view. |
 | `atoms` | object |  |
 | `atoms.radius` | number or object | Uniform radius in Å, or a map of type id/name -> radius. |
 | `atoms.colors` | object | Map of type id/name -> RGB in [0,1]. |
 | `atoms.show` | string | 'all', 'non_fcc', 'non_bcc', 'defects_only', or a raw OVITO boolean expression selecting the atoms to KEEP. |
 | `atoms.names` | object | Map of type id -> species name (e.g. {1: Ni, 2: Cu}); used in labels and legends. |
 | `atoms.color_by` | `type` | `structure` | 'structure' = PTM/CNA structure colors (default); 'type' = per-type colors (default when atoms.colors is given). |
-| `atoms.structure_colors` | object | Map of structure name (other, fcc, hcp, bcc, ico, cubic_diamond, hexagonal_diamond) -> RGB in [0,1]; applies when color_by is 'structure'. Types listed in atoms.colors keep their per-type color (pinned) even in structure mode. |
+| `atoms.structure_colors` | object | Map of structure name (other, fcc, hcp, bcc, ico, sc, cubic_diamond, hexagonal_diamond, graphene) -> RGB in [0,1]; applies when color_by is 'structure'. Types listed in atoms.colors keep their per-type color (pinned) even in structure mode. |
 | `pipeline` | array of `wrap` | `delete_selected` or object | Ordered analysis steps. Each entry is a bare name or {name: {params}}. |
 | `annotate` | object |  |
 | `annotate.tripod` | `miller` | `xyz` | `off` | 'miller' labels axes with crystal directions (needs crystal orientation). |
@@ -45,6 +46,8 @@ run `python tools/gen-schema-md.py` after changing the schema.
 | `annotate.extra` | string or array of string | Extra caption line(s) appended verbatim. |
 | `annotate.dxa_line_width` | number | Dislocation line width in Å (default 2.0). |
 | `annotate.defect_mesh` | boolean | Render DXA's translucent defect/interface mesh (default true). Set false for clean line-and-atoms figures. |
+| `annotate.tripod_font_size` | number | Tripod label size relative to the tripod size (OVITO's CoordinateTripodOverlay.font_size; OVITO default 0.4). Setting it also switches on a white label outline (see tripod_outline). |
+| `annotate.tripod_outline` | boolean | White outline around the tripod labels for readability over atoms. Default: on when tripod_font_size is set, off otherwise. |
 | `grains` | object | Per-grain coordinate tripods (bicrystals, polycrystals): one labeled tripod per grain, anchored at a user-provided origin and oriented per user-provided x/y/z Miller triplets (same semantics as the crystal: block, but per grain). Give EXACTLY ONE of 'file' or 'items'. Origins and orientations are never guessed. |
 | `grains.file` | string | External grains file (path relative to the card): a YAML mapping with a top-level grains: list whose entries have the same shape as items. |
 | `grains.items` | array of grain | Inline grain list (alternative to file). |
@@ -82,7 +85,7 @@ or single-key mappings `{name: {params}}`:
 
 | step | params |
 |------|--------|
-| `ptm` | `rmsd_cutoff`, `orientations` |
+| `ptm` | `rmsd_cutoff`, `orientations`, `structures` |
 | `cna` | `cutoff` |
 | `dxa` | `lattice`, `circuit_length`, `only_perfect`, `line_smoothing` |
 | `grain_segmentation` | `merge_threshold` |

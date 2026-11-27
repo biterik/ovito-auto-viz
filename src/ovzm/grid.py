@@ -32,7 +32,7 @@ from pathlib import Path
 from ovito.modifiers import ColorCodingModifier
 from ovito.vis import TextLabelOverlay
 
-from .card import load_card
+from .card import card_warnings, load_card
 from .crystal import resolve_orientation
 from .grains import finalize_grains, grains_prov, resolve_grains
 from .labels import dxa_summary
@@ -40,8 +40,8 @@ from .pipelinebuild import (apply_color_mode, build_pipeline,
                             check_species_names, resolve_auto_color_ranges,
                             style_atoms, style_structure_types)
 from .scene import (add_grain_tripods, add_overlays, apply_font_family,
-                    ensure_gui_app, make_renderer, make_viewport,
-                    resolve_output)
+                    apply_view_fov, ensure_gui_app, make_renderer,
+                    make_viewport, resolve_output)
 
 
 def _panel_stem(path: str) -> str:
@@ -91,6 +91,8 @@ def run_grid(card_path: str, out_override: str | None = None, *,
     shared_ranges = None
     for i, inp in enumerate(inputs):
         orientation = resolve_orientation(card, inp)
+        for w in card_warnings(card, orientation):
+            print(f"[ovzm] warning ({Path(str(inp)).name}): {w}", file=sys.stderr)
         pipe = build_pipeline(card, inp)
         if i == 0:
             check_species_names(pipe, card)
@@ -136,6 +138,9 @@ def run_grid(card_path: str, out_override: str | None = None, *,
         p["pipe"].remove_from_scene()
     vp.fov = max_fov * margin
     vp.camera_pos = cam_pos
+    # view.fov: one ABSOLUTE field of view for every panel (same scale in
+    # A per pixel), instead of the widest fit
+    apply_view_fov(vp, card)
 
     # ---- pass 2: render panels with the shared camera
     w, h, renderer_name, bg, alpha = resolve_output(card)

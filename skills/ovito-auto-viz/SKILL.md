@@ -76,6 +76,18 @@ These must come from the user if not auto-detectable; ask for them explicitly
   known; `x: auto` parses `x-101_y1-21_z111`-style filenames. The orientation
   drives Miller-labeled tripods, Miller view directions, and ξ/character
   labels. Without it you still get b in lattice coordinates.
+- **Dislocation figures carry their crystallography**: give every card with
+  `dxa` a `crystal:` block (ovzm warns otherwise), so the tripod has Miller
+  labels and b, ξ come out in the crystal frame. OVITO's DXA uses the LH/SF
+  (left-hand start-finish) convention and b flips sign with ξ — quote them as
+  a pair.
+- **Fixed scale**: `view.fov` (orthographic half-height in Å) when figures must
+  share or match a scale; `fit`/`zoom` follow the bounding box.
+- **PTM-only structure types** (`ico`, `sc`, diamonds, graphene): enable them
+  with `ptm: {structures: [...]}` and put `dxa` BEFORE `ptm`, otherwise DXA
+  overwrites "Structure Type" (validate refuses that card).
+- **Readable at the shown size**: raise `annotate.tripod_font_size` (default
+  0.4, relative to the tripod) when a render is shown small on a slide or page.
 - **Labels are computed, never invented**: `annotate.labels: auto` derives
   b, ξ, character angle, family totals, and composition from the data. If
   metadata (e.g. a dcreator `.disparam`) exists, compare DXA's answer against
